@@ -1,7 +1,13 @@
+
+from dotenv import load_dotenv
+
 from fastapi import FastAPI
 from app.globals.db import Base, engine
 from app.todo.router import router as todo_router
 from sqlalchemy import inspect
+
+
+load_dotenv()
 
 app = FastAPI()
 
