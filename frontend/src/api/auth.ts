@@ -1,59 +1,40 @@
-import type { AuthResult, LoginData, SignupData } from '@/types/auth';
+import api from './axiosBase';
 
-export async function loginUser(data: LoginData): Promise<AuthResult> {
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+export interface AuthResponse {
+  access_token: string;
+  token_type: string;
+  user_id: string;
+}
 
-  if (!data.email || !data.password) {
-    return { error: 'Email and password are required' };
-  }
+export interface RegisterPayload {
+  email: string;
+  password: string;
+}
 
-  if (data.email === 'admin@example.com' && data.password === 'admin123') {
-    return {
-      success: true,
-      message: 'Login successful!',
-      user: {
-        id: '1',
-        name: 'Admin User',
-        email: 'admin@example.com',
-        role: 'admin',
-      },
-    };
-  } else if (
-    data.email === 'user@example.com' &&
-    data.password === 'password'
-  ) {
-    return {
-      success: true,
-      message: 'Login successful!',
-      user: {
-        id: '2',
-        name: 'Regular User',
-        email: 'user@example.com',
-        role: 'user',
-      },
-    };
-  } else {
-    return { error: 'Invalid email or password' };
+export async function registerUser(
+  payload: RegisterPayload,
+): Promise<AuthResponse> {
+  try {
+    const response = await api.post<AuthResponse>('/auth/register', payload);
+    return response.data;
+  } catch (error: any) {
+    const message = error.response?.data?.detail || 'Registration failed';
+    throw new Error(message);
   }
 }
 
-export async function signupUser(data: SignupData): Promise<AuthResult> {
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-
-  if (!data.name || !data.email || !data.password || !data.confirmPassword) {
-    return { error: 'All fields are required' };
+export async function loginUser(
+  payload: RegisterPayload,
+): Promise<AuthResponse> {
+  try {
+    const response = await api.post<AuthResponse>('/auth/login', payload);
+    return response.data;
+  } catch (error: any) {
+    const message = error.response?.data?.detail || 'Login failed';
+    throw new Error(message);
   }
-
-  if (data.password !== data.confirmPassword) {
-    return { error: 'Passwords do not match' };
-  }
-
-  if (data.password.length < 6) {
-    return { error: 'Password must be at least 6 characters long' };
-  }
-
-  return {
-    success: true,
-    message: 'Account created successfully! Please log in.',
-  };
 }
+
+export const logout = () => {
+  localStorage.removeItem('user');
+};

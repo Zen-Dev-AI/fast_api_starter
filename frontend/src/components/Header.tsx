@@ -4,13 +4,15 @@ import { Button } from "@/components/ui/button"
 import { Link, useLocation } from "react-router-dom"
 import { useAuth } from "@/context/authProvider"
 import { LogOut, User, Home } from "lucide-react"
+import { logout } from "@/api/auth"
 
 export default function Header() {
-    const { user, logout } = useAuth()
+    const { user, setUser } = useAuth()
     const location = useLocation()
 
     const handleLogout = () => {
         logout()
+        setUser(null)
     }
 
     const isAuthPage = location.pathname === "/signin" || location.pathname === "/signup"

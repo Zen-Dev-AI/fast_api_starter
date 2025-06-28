@@ -1,15 +1,15 @@
-"use client"
-
+import { logout } from "@/api/auth"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useAuth } from "@/context/authProvider"
 import { LogOut, User } from "lucide-react"
 
 export default function DashboardPage() {
-    const { user, logout } = useAuth()
+    const { user, setUser } = useAuth()
 
     const handleLogout = () => {
         logout()
+        setUser(null)
     }
 
     return (
@@ -34,9 +34,6 @@ export default function DashboardPage() {
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-2">
-                                <p>
-                                    <strong>Name:</strong> {user?.name}
-                                </p>
                                 <p>
                                     <strong>Email:</strong> {user?.email}
                                 </p>

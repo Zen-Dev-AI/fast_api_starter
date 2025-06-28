@@ -9,19 +9,21 @@ import { Eye, EyeOff, AlertCircle } from "lucide-react"
 import { Link, useNavigate } from "react-router-dom"
 import { useAuth } from "@/context/authProvider"
 import { signUpSchema, type SignUpFormData } from "@/types/validations"
+import { registerUser } from "@/api/auth"
+import { toast } from "react-toastify"
 
 export default function SignUpForm() {
     const [showPassword, setShowPassword] = useState(false)
     const [acceptTerms, setAcceptTerms] = useState(false)
     const [termsError, setTermsError] = useState("")
-    const { signup, loading, error, clearError, user } = useAuth()
+    const [loading, setLoading] = useState(false)
+    const { user, setUser } = useAuth()
     const navigate = useNavigate()
 
     const {
         register,
         handleSubmit,
         formState: { errors },
-        watch,
     } = useForm<SignUpFormData>({
         resolver: zodResolver(signUpSchema),
         defaultValues: {
@@ -30,31 +32,44 @@ export default function SignUpForm() {
         },
     })
 
-    // Watch form values to clear errors
-    const watchedValues = watch()
-
-    // Redirect if already logged in
     useEffect(() => {
         if (user) {
             navigate("/dashboard")
         }
     }, [user, navigate])
 
-    // Clear errors when form values change
-    useEffect(() => {
-        clearError()
-        setTermsError("")
-    }, [watchedValues, acceptTerms, clearError])
-
     const onSubmit = async (data: SignUpFormData) => {
+        setLoading(true)
         if (!acceptTerms) {
             setTermsError("You must accept the terms and conditions")
             return
         }
-        await signup(data.email, data.password)
+
+        try {
+            const res = await registerUser(data)
+            const { access_token, user_id } = res
+            const { email } = data
+
+            const userObject = {
+                email,
+                token: access_token,
+                id: user_id
+            }
+
+            localStorage.setItem("user", JSON.stringify(userObject))
+
+            setUser(userObject)
+
+            navigate("/dashboard")
+        } catch (err: any) {
+            const message = err.response?.data?.detail || "Login failed"
+            toast.error(message)
+        } finally {
+            setLoading(false)
+        }
     }
 
-    const displayError = error || termsError
+    const displayError = termsError
 
     return (
         <div className="flex items-center justify-center py-12 px-4">
