@@ -3,9 +3,13 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useAuth } from "@/context/authProvider"
 import { LogOut, User } from "lucide-react"
+import { useEffect, useState } from "react"
+import AIChat from "./Chat"
 
 export default function DashboardPage() {
     const { user, setUser } = useAuth()
+
+    const [serverMessage, setServerMessage] = useState("")
 
     const handleLogout = () => {
         logout()
@@ -70,6 +74,9 @@ export default function DashboardPage() {
                             </Button>
                         </CardContent>
                     </Card>
+
+
+                    <AIChat />
                 </div>
             </div>
         </div>

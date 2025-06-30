@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     SECRET_KEY: str = ""
     FRONT_END_ORIGIN: str = ""
     DB_URL: str = ''
+    OPENAI_API_KEY: str = ''
 
     class Config:
         env_file = ".env"

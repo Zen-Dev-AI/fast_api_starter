@@ -8,6 +8,7 @@ dependencies = [
     "aiosqlite>=0.21.0",
     "fastapi-users[sqlalchemy]>=14.0.1",
     "fastapi[standard]>=0.115.12",
+    "openai>=1.93.0",
     "passlib[bcrypt]>=1.7.4",
     "pydantic-settings>=2.10.1",
     "pyjwt>=2.10.1",
