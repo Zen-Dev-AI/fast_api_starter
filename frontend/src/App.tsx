@@ -2,9 +2,9 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
 import { AuthProvider } from "@/context/authProvider"
 import ProtectedRoute from "./components/ProtectedRoute"
 import HomePage from "@/pages/Home"
-import SignInPage from "@/pages/SignIn"
-import SignUpPage from "@/pages/SignUp"
-import DashboardPage from "@/pages/Dashboard"
+import SignInPage from "@/pages/Auth/SignIn"
+import SignUpPage from "@/pages/Auth/SignUp"
+import DashboardPage from "@/pages/Dashboard/Dashboard"
 import "./styles/index.css"
 import {
   QueryClient,

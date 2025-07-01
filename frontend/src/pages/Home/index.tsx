@@ -1,6 +1,5 @@
 import React from 'react';
-
-import Hero from '@/components/Hero';
+import Hero from '@/pages/Home/PageSections/Hero';
 import Layout from '@/components/layouts/MainLayout';
 import { useQuery } from '@tanstack/react-query';
 import { fetchPing } from '@/api/axiosBase';
@@ -15,7 +14,6 @@ const Home: React.FC = () => {
     console.log(data)
 
     if (error) toast.error("Server Not Available")
-
 
     return (
         <Layout>
