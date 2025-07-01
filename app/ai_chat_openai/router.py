@@ -5,9 +5,10 @@ from openai import  OpenAIError
 from .schemas import ChatRequest
 from .dependencies import client
 
-router = APIRouter(prefix="/todos", tags=["todos"])
+router = APIRouter(prefix='/openai', tags=["ai-chat"])
 
-@router.post("/chat-stream")
+
+@router.post("/chat-stream-openai")
 async def chat_stream(request: Request, body: ChatRequest):
     async def event_generator():
         try:
