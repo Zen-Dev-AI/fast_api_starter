@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 #router
 from app.todo.router import router as todo_router
 from app.auth.router import router as auth_router
-from app.ai_chat_langchain.router import router as chat_router_lang
+from app.ai_chat_langchain_basic.router import router as chat_router_lang
 
 
 load_dotenv()
