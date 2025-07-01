@@ -1,4 +1,4 @@
-import AIChat from "./PageSections/Chat"
+import AIChat from "./PageSections/Playground"
 
 export default function DashboardPage() {
 
