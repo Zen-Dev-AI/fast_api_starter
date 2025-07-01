@@ -26,6 +26,7 @@ import { useState } from "react"
 
 import { logout } from "@/api/auth"
 import { useAuth } from "@/context/authProvider"
+import { SelectContent, SelectTrigger, SelectValue } from "@radix-ui/react-select"
 
 export default function AIChatPlayground() {
     const { user, setUser } = useAuth()
@@ -154,7 +155,7 @@ export default function AIChatPlayground() {
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                                <DropdownMenuLabel>{user.name}</DropdownMenuLabel>
+                                <DropdownMenuLabel>{user?.email}</DropdownMenuLabel>
                                 <DropdownMenuItem onClick={handleLogout}>
                                     <LogOut className="w-4 h-4 mr-2" /> Logout
                                 </DropdownMenuItem>
@@ -172,20 +173,25 @@ export default function AIChatPlayground() {
                                     <h2 className="text-xl font-semibold">Settings</h2>
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium">Model</label>
-                                    {/* <Select
-                                        value={selectedModel}
+
+                                    <Select
                                         onValueChange={(name) => {
                                             const model = models.find((m) => m.name === name)
                                             if (model) setSelectedModel(model.id)
                                         }}
                                     >
-                                        {models.map((model) => (
-                                            <SelectItem key={model.id} value={model.name}>
-                                                {model.name}
-                                            </SelectItem>
-                                        ))}
-                                    </Select> */}
+                                        <SelectTrigger className="w-[180px]">
+                                            <SelectValue placeholder={selectedModel || "Select a model"} />
+                                        </SelectTrigger>
+                                        <SelectContent className="border-4 bg-white">
+                                            {models.map((model) => (
+                                                <SelectItem key={model.id} value={model.name}>
+                                                    {model.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium">System Prompt</label>
