@@ -34,8 +34,8 @@ export function ChatWindow({
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         <span className="badge badge-secondary">{selectedModelName}</span>
-                        {isLoading && (
-                            <Button variant="outline" size="sm" onClick={stop}>
+                        {(
+                            <Button variant="outline" size="sm" className="ml-4" onClick={stop}>
                                 Stop
                             </Button>
                         )}

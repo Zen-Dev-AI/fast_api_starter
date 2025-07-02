@@ -10,6 +10,10 @@ export default function AIChatPlayground() {
     const [showSettings, setShowSettings] = useState(true)
     const [error, setError] = useState<Error | null>(null)
 
+    const [abortController, setAbortController] = useState<AbortController | null>(null)
+    const controller = new AbortController()
+
+
     const [selectedModel, setSelectedModel] = useState("gpt-3.5-turbo")
     const models = [
         { id: "gpt-3.5-turbo", name: "GPT-3.5" },
@@ -44,6 +48,7 @@ export default function AIChatPlayground() {
                     system_message: systemPrompt,
                     temperature: temperature[0],
                 }),
+                signal: controller.signal
             })
 
             const reader = res.body?.getReader()
@@ -78,13 +83,20 @@ export default function AIChatPlayground() {
         } catch (err: any) {
             setError(err)
         } finally {
+
             setIsLoading(false)
+            setAbortController(null)
         }
     }
 
     const stop = () => {
-        // Implement stop if applicable
+        if (abortController) {
+            abortController.abort()
+            setAbortController(null)
+            setIsLoading(false)
+        }
     }
+
 
     const reload = () => {
         setError(null)
