@@ -66,7 +66,6 @@ export default function AIChatPlayground() {
             const reader = res.body?.getReader()
             const decoder = new TextDecoder("utf-8")
             let aiResponse = ""
-            let isFirstChunk = true
             const assistantMessageId = `ai-${userMessageId}`
 
             if (!reader) throw new Error("No response stream")
@@ -161,7 +160,7 @@ export default function AIChatPlayground() {
                         </div>
                     )}
 
-                    <div className={showSettings ? "lg:col-span-3" : "col-span-1"}>
+                    <div className={showSettings ? "lg:col-span-3" : "col-span-1"} style={{ height: "85vh" }}>
                         <ChatWindow
                             messages={messages}
                             input={input}
