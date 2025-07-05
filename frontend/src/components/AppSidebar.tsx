@@ -1,8 +1,6 @@
 import * as React from "react"
 import {
-  IconDashboard,
   IconInnerShadowTop,
-  IconListDetails
 } from "@tabler/icons-react"
 
 import { NavMain } from "@/components/NavMain"
@@ -16,26 +14,9 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
+import { navMain } from "@/lib/config"
 
-const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
-  navMain: [
-    {
-      title: "Dashboard",
-      url: "/dashboard",
-      icon: IconDashboard,
-    },
-    {
-      title: "Chat",
-      url: "/chat-dashboard",
-      icon: IconListDetails,
-    },
-  ],
-}
+
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
@@ -56,7 +37,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain items={navMain} />
+
       </SidebarContent>
       <SidebarFooter>
         <NavUser />

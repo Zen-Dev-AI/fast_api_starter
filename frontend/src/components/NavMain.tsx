@@ -8,17 +8,22 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { Link, useNavigate } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
+
+
+export interface DashNavItemsI {
+  title: string
+  url: string
+  icon?: Icon
+}
+
+interface NavMainPropsI {
+  items: DashNavItemsI[]
+}
 
 export function NavMain({
   items,
-}: {
-  items: {
-    title: string
-    url: string
-    icon?: Icon
-  }[]
-}) {
+}: NavMainPropsI) {
 
   let navigate = useNavigate();
 
