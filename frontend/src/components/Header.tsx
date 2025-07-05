@@ -34,7 +34,7 @@ export default function Header() {
                             <div className="flex items-center space-x-4">
                                 <div className="flex items-center space-x-2 text-sm text-gray-700">
                                     <User className="h-4 w-4" />
-                                    <span>Welcome, {user.name}</span>
+                                    <span>Welcome, {user.email}</span>
                                 </div>
                                 <Link to="/dashboard">
                                     <Button variant="ghost" size="sm">

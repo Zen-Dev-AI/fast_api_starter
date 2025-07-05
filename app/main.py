@@ -10,8 +10,7 @@ from langgraph.checkpoint.postgres import PostgresSaver
 #router
 from app.todo.router import router as todo_router
 from app.auth.router import router as auth_router
-from app.ai_chat_langchain_basic.router import router as chat_router_langchain
-from app.ai_chat_langchain_langraph.router import router as chat_router_langgraph
+from app.chat.router import router as chat_router
 
 
 load_dotenv()
@@ -50,7 +49,6 @@ Base.metadata.create_all(bind=engine)
 #routers
 app.include_router(todo_router)
 app.include_router(auth_router)
-app.include_router(chat_router_langchain)
-app.include_router(chat_router_langgraph)
+app.include_router(chat_router)
 
 print("Server Started")

@@ -4,7 +4,8 @@ import ProtectedRoute from "./components/ProtectedRoute"
 import HomePage from "@/pages/Home"
 import SignInPage from "@/pages/Auth/SignIn"
 import SignUpPage from "@/pages/Auth/SignUp"
-import DashboardPage from "@/pages/Dashboard/Dashboard"
+// import DashboardPage from "@/pages/Chat/Chat"
+import DashboardPage from "@/pages/Dashboard";
 import "./styles/index.css"
 import {
   QueryClient,
