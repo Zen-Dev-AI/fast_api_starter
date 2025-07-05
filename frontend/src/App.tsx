@@ -5,7 +5,7 @@ import HomePage from "@/pages/Home"
 import SignInPage from "@/pages/Auth/SignIn"
 import SignUpPage from "@/pages/Auth/SignUp"
 // import DashboardPage from "@/pages/Chat/Chat"
-import DashboardPage from "@/pages/Dashboard";
+import DashboardPage from "@/pages/Dashboard/Home";
 import "./styles/index.css"
 import {
   QueryClient,
@@ -14,6 +14,7 @@ import {
 
 
 import { ToastContainer } from 'react-toastify';
+import ChatsPage from "./pages/Dashboard/ChatDash"
 
 const queryClient = new QueryClient()
 
@@ -32,6 +33,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <DashboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/chat-dashboard"
+              element={
+                <ProtectedRoute>
+                  <ChatsPage />
                 </ProtectedRoute>
               }
             />

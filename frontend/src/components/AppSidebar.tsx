@@ -1,11 +1,8 @@
 import * as React from "react"
 import {
-
   IconDashboard,
-
   IconInnerShadowTop,
-  IconListDetails,
-
+  IconListDetails
 } from "@tabler/icons-react"
 
 import { NavMain } from "@/components/NavMain"
@@ -29,15 +26,14 @@ const data = {
   navMain: [
     {
       title: "Dashboard",
-      url: "#",
+      url: "/dashboard",
       icon: IconDashboard,
     },
     {
-      title: "Lifecycle",
-      url: "#",
+      title: "Chat",
+      url: "/chat-dashboard",
       icon: IconListDetails,
     },
-
   ],
 }
 
