@@ -7,7 +7,7 @@ export default function AIChatPlayground() {
     const [input, setInput] = useState("")
     const [messages, setMessages] = useState<any[]>([])
     const [isLoading, setIsLoading] = useState(false)
-    const [showSettings, setShowSettings] = useState(true)
+    const [showSettings, setShowSettings] = useState(false)
     const [error, setError] = useState<Error | null>(null)
 
     const [abortController, setAbortController] = useState<AbortController | null>(null)
@@ -71,6 +71,8 @@ export default function AIChatPlayground() {
 
             if (!reader) throw new Error("No response stream")
 
+
+            // Add new assistant message on first chunk, then always update the last one with matching id
             while (true) {
                 const { value, done } = await reader.read()
                 if (done) break
@@ -87,24 +89,31 @@ export default function AIChatPlayground() {
                         setError(new Error(line.replace("[ERROR]", "").trim()))
                         break
                     }
-
-
-                    const match = line.match(/content='(.*?)'/);
-                    const contentValue = match ? match[1] : null;
+                    const match = line.match(/content='(.*?)'/)
+                    let contentValue = match ? match[1] : ""
+                    contentValue = contentValue.replace(/\\n/g, "\n")
 
                     aiResponse += contentValue
 
-                    setMessages((prev) => {
-                        if (isFirstChunk) {
-                            isFirstChunk = false
+                    setMessages(prev => {
+
+                        const lastIdx = [...prev]
+                            .map((m, i) => m.id === assistantMessageId ? i : -1)
+                            .filter(i => i !== -1)
+                            .pop()
+
+                        if (lastIdx !== undefined) {
+
+                            const updated = [...prev]
+                            updated[lastIdx] = { ...updated[lastIdx], content: updated[lastIdx].content + contentValue }
+                            return updated
+                        } else {
                             return [...prev, { id: assistantMessageId, role: "assistant", content: contentValue }]
                         }
-                        return prev.map((m) =>
-                            m.id === assistantMessageId ? { ...m, content: aiResponse } : m
-                        )
                     })
                 }
             }
+
         } catch (err: any) {
             setError(err)
         } finally {
