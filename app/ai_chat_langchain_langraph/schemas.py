@@ -5,3 +5,4 @@ class ChatRequest(BaseModel):
     model_name: str
     system_message: str | None = None
     temperature: float = 0.7
+    thread_id: str

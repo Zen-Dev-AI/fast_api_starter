@@ -11,8 +11,6 @@ export default function AIChatPlayground() {
     const [error, setError] = useState<Error | null>(null)
 
     const [abortController, setAbortController] = useState<AbortController | null>(null)
-    const controller = new AbortController()
-
 
     const [selectedModel, setSelectedModel] = useState("gpt-3.5-turbo")
     const models = [
@@ -28,18 +26,31 @@ export default function AIChatPlayground() {
         setInput(e.target.value)
     }
 
+    const stop = () => {
+        if (abortController) {
+            abortController.abort()
+            setAbortController(null)
+            setIsLoading(false)
+        }
+    }
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         if (!input.trim()) return
+
         setIsLoading(true)
         setError(null)
 
-        const userMessage = { id: Date.now(), role: "user", content: input.trim() }
+        const userMessageId = Date.now()
+        const userMessage = { id: userMessageId, role: "user", content: input.trim() }
         setMessages((prev) => [...prev, userMessage])
         setInput("")
 
+        const controller = new AbortController()
+        setAbortController(controller)
+
         try {
-            const res = await fetch("http://localhost:8000/langchain/chat-stream", {
+            const res = await fetch("http://localhost:8000/langgraph/chat-stream", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -47,6 +58,7 @@ export default function AIChatPlayground() {
                     model_name: selectedModel,
                     system_message: systemPrompt,
                     temperature: temperature[0],
+                    thread_id: "test1"
                 }),
                 signal: controller.signal
             })
@@ -54,6 +66,8 @@ export default function AIChatPlayground() {
             const reader = res.body?.getReader()
             const decoder = new TextDecoder("utf-8")
             let aiResponse = ""
+            let isFirstChunk = true
+            const assistantMessageId = `ai-${userMessageId}`
 
             if (!reader) throw new Error("No response stream")
 
@@ -73,30 +87,31 @@ export default function AIChatPlayground() {
                         setError(new Error(line.replace("[ERROR]", "").trim()))
                         break
                     }
-                    aiResponse += line
-                    setMessages((prev) => [
-                        ...prev.filter((m) => m.id !== "ai"),
-                        { id: "ai", role: "assistant", content: aiResponse },
-                    ])
+
+
+                    const match = line.match(/content='(.*?)'/);
+                    const contentValue = match ? match[1] : null;
+
+                    aiResponse += contentValue
+
+                    setMessages((prev) => {
+                        if (isFirstChunk) {
+                            isFirstChunk = false
+                            return [...prev, { id: assistantMessageId, role: "assistant", content: contentValue }]
+                        }
+                        return prev.map((m) =>
+                            m.id === assistantMessageId ? { ...m, content: aiResponse } : m
+                        )
+                    })
                 }
             }
         } catch (err: any) {
             setError(err)
         } finally {
-
             setIsLoading(false)
             setAbortController(null)
         }
     }
-
-    const stop = () => {
-        if (abortController) {
-            abortController.abort()
-            setAbortController(null)
-            setIsLoading(false)
-        }
-    }
-
 
     const reload = () => {
         setError(null)
