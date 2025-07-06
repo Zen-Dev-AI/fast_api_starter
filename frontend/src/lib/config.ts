@@ -9,7 +9,7 @@ export const navMain: DashNavItemsI[] = [
   },
   {
     title: 'Chat',
-    url: '/chat-dashboard',
+    url: '/dashboard/chat',
     icon: IconListDetails,
   },
 ];

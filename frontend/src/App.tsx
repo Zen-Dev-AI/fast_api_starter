@@ -14,6 +14,7 @@ import {
 
 
 import { ToastContainer } from 'react-toastify';
+import { AppLayout } from "./pages/Dashboard/AppLayout"
 
 
 const queryClient = new QueryClient()
@@ -26,24 +27,23 @@ function App() {
         <Router>
           <Routes>
             <Route path="/" element={<HomePage />} />
+
             <Route path="/signin" element={<SignInPage />} />
             <Route path="/signup" element={<SignUpPage />} />
+
+            {/* Protected Dashboard Layout */}
             <Route
               path="/dashboard"
               element={
                 <ProtectedRoute>
-                  <DashboardPage />
+                  <AppLayout />
                 </ProtectedRoute>
               }
-            />
-            <Route
-              path="/chat-dashboard"
-              element={
-                <ProtectedRoute>
-                  <ChatsPage />
-                </ProtectedRoute>
-              }
-            />
+            >
+              <Route index element={<DashboardPage />} />
+              <Route path="chat" element={<ChatsPage />} />
+              <Route path="chat/:id" element={<ChatsPage />} />
+            </Route>
           </Routes>
         </Router>
         <ToastContainer />

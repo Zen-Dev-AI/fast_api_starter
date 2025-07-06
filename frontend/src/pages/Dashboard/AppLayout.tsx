@@ -4,12 +4,11 @@ import {
     SidebarInset,
     SidebarProvider,
 } from "@/components/ui/sidebar"
+import { Outlet } from "react-router-dom"
 
-interface AppLayoutProps {
-    children: React.ReactNode
-}
 
-export function AppLayout({ children }: AppLayoutProps) {
+
+export function AppLayout() {
     return (
         <SidebarProvider
             style={
@@ -22,11 +21,7 @@ export function AppLayout({ children }: AppLayoutProps) {
             <AppSidebar variant="inset" />
             <SidebarInset>
                 <SiteHeader />
-                <div className="flex flex-1 flex-col">
-                    <div className="@container/main flex flex-1 flex-col gap-2">
-                        {children}
-                    </div>
-                </div>
+                <Outlet />
             </SidebarInset>
         </SidebarProvider>
     )

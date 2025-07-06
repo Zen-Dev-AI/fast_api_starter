@@ -2,8 +2,13 @@ import { useState } from "react"
 import { ChatHeader } from "./ChatHeader"
 import { ChatSettings } from "./ChatSettings"
 import { ChatWindow } from "./ChatWindow"
+import { useNavigate, useParams } from "react-router-dom";
+
 
 export default function AIChatPlayground() {
+    const { id } = useParams();
+    const navigate = useNavigate();
+
     const [input, setInput] = useState("")
     const [messages, setMessages] = useState<any[]>([])
     const [isLoading, setIsLoading] = useState(false)
@@ -34,20 +39,31 @@ export default function AIChatPlayground() {
         }
     }
 
+
     const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault()
-        if (!input.trim()) return
+        e.preventDefault();
+        if (!input.trim()) return;
 
-        setIsLoading(true)
-        setError(null)
+        setIsLoading(true);
+        setError(null);
 
-        const userMessageId = Date.now()
-        const userMessage = { id: userMessageId, role: "user", content: input.trim() }
-        setMessages((prev) => [...prev, userMessage])
-        setInput("")
+        if (!id) {
+            const newId = typeof crypto !== "undefined" && crypto.randomUUID
+                ? crypto.randomUUID()
+                : Date.now().toString(); // Fallback if crypto not available
+            navigate(`/chat/${newId}`, { replace: true });
+            return;
+        }
 
-        const controller = new AbortController()
-        setAbortController(controller)
+
+
+        const userMessageId = Date.now();
+        const userMessage = { id: userMessageId, role: "user", content: input.trim() };
+        setMessages((prev) => [...prev, userMessage]);
+        setInput("");
+
+        const controller = new AbortController();
+        setAbortController(controller);
 
         try {
             const res = await fetch("http://localhost:8000/langgraph/chat-stream", {
@@ -58,68 +74,67 @@ export default function AIChatPlayground() {
                     model_name: selectedModel,
                     system_message: systemPrompt,
                     temperature: temperature[0],
-                    thread_id: "test1"
+                    thread_id: id,
                 }),
-                signal: controller.signal
-            })
+                signal: controller.signal,
+            });
 
-            const reader = res.body?.getReader()
-            const decoder = new TextDecoder("utf-8")
-            let aiResponse = ""
-            const assistantMessageId = `ai-${userMessageId}`
+            const reader = res.body?.getReader();
+            const decoder = new TextDecoder("utf-8");
+            let aiResponse = "";
+            const assistantMessageId = `ai-${userMessageId}`;
 
-            if (!reader) throw new Error("No response stream")
+            if (!reader) throw new Error("No response stream");
 
-
-            // Add new assistant message on first chunk, then always update the last one with matching id
             while (true) {
-                const { value, done } = await reader.read()
-                if (done) break
+                const { value, done } = await reader.read();
+                if (done) break;
 
-                const chunk = decoder.decode(value, { stream: true })
+                const chunk = decoder.decode(value, { stream: true });
                 const lines = chunk
                     .split("\n")
                     .filter((line) => line.startsWith("data: "))
-                    .map((line) => line.replace("data: ", ""))
+                    .map((line) => line.replace("data: ", ""));
 
                 for (const line of lines) {
-                    if (line === "[DONE]") continue
+                    if (line === "[DONE]") continue;
                     if (line.startsWith("[ERROR]")) {
-                        setError(new Error(line.replace("[ERROR]", "").trim()))
-                        break
+                        setError(new Error(line.replace("[ERROR]", "").trim()));
+                        break;
                     }
-                    const match = line.match(/content='(.*?)'/)
-                    let contentValue = match ? match[1] : ""
-                    contentValue = contentValue.replace(/\\n/g, "\n")
+                    const match = line.match(/content='(.*?)'/);
+                    let contentValue = match ? match[1] : "";
+                    contentValue = contentValue.replace(/\\n/g, "\n");
 
-                    aiResponse += contentValue
+                    aiResponse += contentValue;
 
-                    setMessages(prev => {
-
+                    setMessages((prev) => {
                         const lastIdx = [...prev]
                             .map((m, i) => m.id === assistantMessageId ? i : -1)
                             .filter(i => i !== -1)
-                            .pop()
+                            .pop();
 
                         if (lastIdx !== undefined) {
-
-                            const updated = [...prev]
-                            updated[lastIdx] = { ...updated[lastIdx], content: updated[lastIdx].content + contentValue }
-                            return updated
+                            const updated = [...prev];
+                            updated[lastIdx] = {
+                                ...updated[lastIdx],
+                                content: updated[lastIdx].content + contentValue,
+                            };
+                            return updated;
                         } else {
-                            return [...prev, { id: assistantMessageId, role: "assistant", content: contentValue }]
+                            return [...prev, { id: assistantMessageId, role: "assistant", content: contentValue }];
                         }
-                    })
+                    });
                 }
             }
-
         } catch (err: any) {
-            setError(err)
+            setError(err);
         } finally {
-            setIsLoading(false)
-            setAbortController(null)
+            setIsLoading(false);
+            setAbortController(null);
         }
-    }
+    };
+
 
     const reload = () => {
         setError(null)
