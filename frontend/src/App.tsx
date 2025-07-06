@@ -11,7 +11,7 @@ import {
   QueryClient,
   QueryClientProvider,
 } from '@tanstack/react-query'
-
+import AppChat from "./pages/Dashboard/ChatDash"
 
 import { ToastContainer } from 'react-toastify';
 import { AppLayout } from "./pages/Dashboard/AppLayout"
@@ -41,7 +41,7 @@ function App() {
               }
             >
               <Route index element={<DashboardPage />} />
-              <Route path="chat" element={<ChatsPage />} />
+              <Route path="chat" element={<AppChat />} />
               <Route path="chat/:id" element={<ChatsPage />} />
             </Route>
           </Routes>

@@ -39,7 +39,6 @@ export default function AIChatPlayground() {
         }
     }
 
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!input.trim()) return;
@@ -47,15 +46,13 @@ export default function AIChatPlayground() {
         setIsLoading(true);
         setError(null);
 
-        if (!id) {
-            const newId = typeof crypto !== "undefined" && crypto.randomUUID
-                ? crypto.randomUUID()
-                : Date.now().toString(); // Fallback if crypto not available
-            navigate(`/chat/${newId}`, { replace: true });
-            return;
-        }
-
-
+        // if (!id) {
+        //     const newId = typeof crypto !== "undefined" && crypto.randomUUID
+        //         ? crypto.randomUUID()
+        //         : Date.now().toString(); // Fallback if crypto not available
+        //     navigate(`/chat/${newId}`, { replace: true });
+        //     return;
+        // }
 
         const userMessageId = Date.now();
         const userMessage = { id: userMessageId, role: "user", content: input.trim() };
@@ -74,7 +71,7 @@ export default function AIChatPlayground() {
                     model_name: selectedModel,
                     system_message: systemPrompt,
                     temperature: temperature[0],
-                    thread_id: id,
+                    thread_id: id || "tsest2",
                 }),
                 signal: controller.signal,
             });
@@ -107,6 +104,8 @@ export default function AIChatPlayground() {
                     contentValue = contentValue.replace(/\\n/g, "\n");
 
                     aiResponse += contentValue;
+
+                    console.log(line)
 
                     setMessages((prev) => {
                         const lastIdx = [...prev]
