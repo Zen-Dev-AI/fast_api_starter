@@ -11,28 +11,6 @@ from fastapi import  Depends
 
 router = APIRouter(prefix="/langgraph", tags=["ai-chat", "langgraph"])
 
-
-
-@router.get("/chat-stream")
-def chat_state(
-    # body: ChatRequest,
-    checkpointer: PostgresSaver = Depends(get_checkpointer)
-):
-
-    config = {
-        "configurable": {
-            "thread_id": "08e08824-a704-4c13-9d9d-dbe569bd60fd",
-            # optionally provide an ID for a specific checkpoint,
-            # otherwise the latest checkpoint is shown
-            # "checkpoint_id": "1f029ca3-1f5b-6704-8004-820c16b69a5a"
-
-        }
-    }
-    return checkpointer.get_tuple(config)
-    
-
-
-
 @router.post("/chat-stream")
 def chat_stream(
     body: ChatRequest,
