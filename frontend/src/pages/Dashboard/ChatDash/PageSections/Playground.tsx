@@ -3,6 +3,7 @@ import { ChatHeader } from "./ChatHeader"
 import { ChatSettings } from "./ChatSettings"
 import { ChatWindow } from "./ChatWindow"
 import { useNavigate, useParams } from "react-router-dom";
+import { v4 as uuidv4 } from "uuid";
 
 
 export default function AIChatPlayground() {
@@ -45,14 +46,11 @@ export default function AIChatPlayground() {
 
         setIsLoading(true);
         setError(null);
+        const newId = uuidv4();
 
-        // if (!id) {
-        //     const newId = typeof crypto !== "undefined" && crypto.randomUUID
-        //         ? crypto.randomUUID()
-        //         : Date.now().toString(); // Fallback if crypto not available
-        //     navigate(`/chat/${newId}`, { replace: true });
-        //     return;
-        // }
+        if (!id) {
+            navigate(`/dashboard/chat/${newId}`, { replace: true });
+        }
 
         const userMessageId = Date.now();
         const userMessage = { id: userMessageId, role: "user", content: input.trim() };
@@ -63,6 +61,7 @@ export default function AIChatPlayground() {
         setAbortController(controller);
 
         try {
+            console.log(id || newId)
             const res = await fetch("http://localhost:8000/langgraph/chat-stream", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -71,7 +70,7 @@ export default function AIChatPlayground() {
                     model_name: selectedModel,
                     system_message: systemPrompt,
                     temperature: temperature[0],
-                    thread_id: id || "tsest2",
+                    thread_id: id || newId,
                 }),
                 signal: controller.signal,
             });
@@ -104,8 +103,6 @@ export default function AIChatPlayground() {
                     contentValue = contentValue.replace(/\\n/g, "\n");
 
                     aiResponse += contentValue;
-
-                    console.log(line)
 
                     setMessages((prev) => {
                         const lastIdx = [...prev]
@@ -150,6 +147,14 @@ export default function AIChatPlayground() {
         navigator.clipboard.writeText(text)
     }
 
+    const handleTest = async () => {
+        const res = await fetch("http://localhost:8000/langgraph/chat-stream", {
+            method: "GET",
+        });
+
+        console.log(await res.json())
+    }
+
     return (
         <div className="min-h-screen bg-background p-4">
             <div className="max-w-7xl mx-auto space-y-6">
@@ -158,6 +163,7 @@ export default function AIChatPlayground() {
                     showSettings={showSettings}
                     toggleSettings={() => setShowSettings(!showSettings)}
                 />
+                <button onClick={handleTest}>TEST </button>
 
                 <div className={`grid gap-6 ${showSettings ? "grid-cols-1 lg:grid-cols-4" : "grid-cols-1"}`}>
                     {showSettings && (
