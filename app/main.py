@@ -1,6 +1,5 @@
 from dotenv import load_dotenv
 from fastapi import FastAPI
-import langgraph.version
 from app.globals.db import Base, engine
 from app.globals.settings import settings
 from fastapi.middleware.cors import CORSMiddleware

@@ -4,13 +4,12 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.checkpoint.postgres import PostgresSaver
 import logging
 from app.globals.settings import settings
-from app.globals.dependencies import get_checkpointer
+from .dependencies import get_checkpointer
 from .utils import build_graph
 from .schemas import ChatRequest
 from fastapi import  Depends
 
 router = APIRouter(prefix="/langgraph", tags=["ai-chat", "langgraph"])
-
 
 @router.post("/chat-stream")
 def chat_stream(
