@@ -13,8 +13,9 @@ from app.auth.jwt import get_current_user
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 from langchain.chat_models import init_chat_model
 from app.auth.models import User
-from fastapi import HTTPException
+from fastapi import HTTPException, Response
 import json
+
 
 router = APIRouter(prefix="/langchain", tags=["ai-chat", "langchain"])
 
@@ -96,3 +97,22 @@ def list_my_conversations(
     ordered from newest to oldest.
     """
     return services.list_conversations_by_user(db, current_user.id)
+
+
+@router.delete(
+    "/conversations/{thread_id}", 
+    status_code=204,
+    summary="Delete a conversation and all its messages",
+)
+def delete_conversation(
+    thread_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+
+    conv = services.get_conversation(db, thread_id, current_user.id)
+    if not conv:
+        raise HTTPException(404, "Conversation not found")
+
+    services.delete_conversation(db, conv.id)
+    return Response(status_code=204)

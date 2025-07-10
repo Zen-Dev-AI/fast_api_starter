@@ -42,3 +42,7 @@ def list_conversations_by_user(db: Session, user_id: int) -> list[Conversation]:
           .order_by(Conversation.created_at.desc())
           .all()
     )
+
+def delete_conversation(db: Session, conversation_id: int):
+    db.query(Conversation).filter_by(id=conversation_id).delete()
+    db.commit()

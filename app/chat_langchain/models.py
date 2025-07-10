@@ -26,6 +26,7 @@ class Conversation(Base):
         "Message",
         back_populates="conversation",
         cascade="all, delete-orphan",
+        passive_deletes=True,
     )
 
 class Message(Base):

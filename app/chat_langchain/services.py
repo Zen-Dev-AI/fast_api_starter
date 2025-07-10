@@ -25,3 +25,6 @@ def get_messages_for_conversation(db: Session, conversation_id: int):
 
 def list_conversations_by_user(db: Session, user_id: int) -> list[Conversation]:
     return repository.list_conversations_by_user(db, user_id)
+
+def delete_conversation(db: Session, conversation_id: int):
+    return repository.delete_conversation(db, conversation_id)

@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from "react"
 import ChatHeader from "./ChatHeader"
 import { ChatWindow } from "./ChatWindow"
-import { useNavigate, useParams } from "react-router-dom";
-import { v4 as uuidv4 } from "uuid";
+import { useParams, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/context/authProvider";
 import { useConversations } from "@/context/conversationProvider";
 
@@ -10,7 +9,8 @@ import { useConversations } from "@/context/conversationProvider";
 
 export default function AIChatPlayground() {
     const { id } = useParams();
-    const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const isNew = searchParams.get("isNew") === "true";
     const { user } = useAuth()
 
     const [input, setInput] = useState("")
@@ -19,9 +19,7 @@ export default function AIChatPlayground() {
     const [showSettings, setShowSettings] = useState(false)
     const [error, setError] = useState<Error | null>(null)
 
-    // const [abortController, setAbortController] = useState<AbortController | null>(null)
     const abortControllerRef = useRef<AbortController | null>(null)
-
 
     const [selectedModel, setSelectedModel] = useState("gpt-3.5-turbo")
     const models = [
@@ -33,14 +31,14 @@ export default function AIChatPlayground() {
     const [systemPrompt, setSystemPrompt] = useState("")
     const [temperature, setTemperature] = useState([0.7])
 
-    const { addConversation } = useConversations()
+    const { conversations, addConversation } = useConversations()
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setInput(e.target.value)
     }
 
     useEffect(() => {
-        if (!id) return
+        if (!id || isNew) return
 
         const loadHistory = async () => {
             setIsLoading(true)
@@ -57,15 +55,14 @@ export default function AIChatPlayground() {
 
                 setMessages(history.map(m => ({ id: m.id, role: m.role, content: m.content })))
             } catch (err: any) {
-                console.error("Failed to load history", err)
-                setError(err)
+                console.log(err)
             } finally {
                 setIsLoading(false)
             }
         }
 
         loadHistory()
-    }, [id, user])
+    }, [id, user, isNew])
 
 
     /**
@@ -93,9 +90,6 @@ export default function AIChatPlayground() {
         e.preventDefault();
         if (!input.trim()) return;
 
-        const newId = uuidv4();
-        const isNew = !id
-
         setIsLoading(true);
         setError(null);
 
@@ -104,7 +98,6 @@ export default function AIChatPlayground() {
         setMessages((prev) => [...prev, userMessage]);
         setInput("");
 
-        // setAbortController(controller);
         const controller = new AbortController()
         abortControllerRef.current = controller
 
@@ -121,7 +114,7 @@ export default function AIChatPlayground() {
                     model_name: selectedModel,
                     system_message: systemPrompt,
                     temperature: temperature[0],
-                    thread_id: id || newId,
+                    thread_id: id,
                 }),
                 signal: controller.signal,
             });
@@ -155,51 +148,38 @@ export default function AIChatPlayground() {
             }
 
         } catch (err: any) {
-            console.log(err.name, abortControllerRef)
             if (!abortControllerRef.current) setError(err);
         } finally {
             setIsLoading(false);
-            // setAbortController(null);
-            // abortControllerRef.current = null
+            const created_at = new Date().toISOString()
+            const threadId = id || ""
 
+            const exists = conversations.some(c =>
+                c.url.endsWith(threadId)
+            );
 
-            if (isNew && abortControllerRef.current !== null) {
-                // add to global sidebar
+            if (!exists) {
                 addConversation({
-                    thread_id: newId,
+                    thread_id: threadId,
                     title: userMessage.content,
-                    created_at: new Date().toISOString(),
-                })
-                // navigate into that new thread
-                navigate(newId)
+                    created_at: created_at || new Date().toISOString(),
+                });
             }
             abortControllerRef.current = null
         }
     };
 
     const stop = () => {
-        // if (abortController) {
-        //     abortController.abort()
-        //     setIsLoading(false)
-        // }
         const c = abortControllerRef.current
         if (c) {
             c.abort()
-            // abortControllerRef.current = null
             setIsLoading(false)
         }
     }
 
-
     const reload = () => {
         setError(null)
         handleSubmit(new Event("submit") as any)
-    }
-
-    const clearChat = () => {
-        setMessages([])
-        setInput("")
-        setError(null)
     }
 
     const copyMessage = (text: string) => {
@@ -211,7 +191,7 @@ export default function AIChatPlayground() {
         <div className="min-h-screen bg-background p-4">
             <div className="max-w-7xl mx-auto space-y-6">
                 <ChatHeader
-                    onClear={clearChat}
+                    threadId={id!}
                     showSettings={showSettings}
                     toggleSettings={() => setShowSettings((prev) => !prev)}
                     selectedModel={selectedModel}
@@ -225,7 +205,7 @@ export default function AIChatPlayground() {
 
                 <div className={`grid gap-6`}>
 
-                    <div className={showSettings ? "lg:col-span-3" : "col-span-1"} style={{ height: "85vh" }}>
+                    <div className={showSettings ? "lg:col-span-3" : "col-span-1"} style={{ height: "70vh" }}>
                         <ChatWindow
                             messages={messages}
                             input={input}

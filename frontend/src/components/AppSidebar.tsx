@@ -13,13 +13,30 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { navMain } from "@/lib/config"
-import type { DashNavItemsI } from "@/components/NavMain"
-import { useAuth } from "@/context/authProvider"
+
+import type { DashNavItemsI } from '@/components/NavMain';
+import { IconDashboard, IconListDetails } from '@tabler/icons-react';
+import { v4 as uuidv4 } from "uuid";
+
+
+export const navMain: DashNavItemsI[] = [
+  {
+    title: 'Dashboard',
+    url: '/dashboard',
+    icon: IconDashboard,
+  },
+  {
+    title: 'Chat',
+    url: `/dashboard/chat/`,
+    icon: IconListDetails,
+  },
+];
+
+
 import { useConversations } from "@/context/conversationProvider"
+import { _uuidv4 } from "zod/v4/core"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { user } = useAuth()
   const { conversations } = useConversations()
 
 

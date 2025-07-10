@@ -9,12 +9,15 @@ import {
 } from "@/components/ui/select"
 import { Slider } from "@/components/ui/slider"
 import { Textarea } from "@/components/ui/textarea"
+import { useAuth } from "@/context/authProvider"
+import { useConversations } from "@/context/conversationProvider"
 import { Trash2, ChevronUp, Settings as SettingsIcon } from "lucide-react"
+import { useNavigate } from "react-router-dom"
 
 interface ModelOption { id: string; name: string }
 
 interface Props {
-    onClear: () => void
+    threadId: string;
     showSettings: boolean
     toggleSettings: () => void
     selectedModel: string
@@ -27,7 +30,7 @@ interface Props {
 }
 
 function ChatHeader({
-    onClear,
+    threadId,
     showSettings,
     toggleSettings,
     selectedModel,
@@ -38,14 +41,31 @@ function ChatHeader({
     temperature,
     setTemperature,
 }: Props) {
+    const navigate = useNavigate()
+    const { removeConversation } = useConversations()
+    const { user } = useAuth()
+
+    const onDelete = async () => {
+        const res = await fetch(
+            `http://localhost:8000/langchain/conversations/${threadId}`,
+            {
+                method: "DELETE",
+                headers: { "Authorization": `Bearer ${user?.token}` },
+            }
+        )
+        if (res.ok) {
+            removeConversation(threadId)
+            navigate("/dashboard", { replace: true })
+        } else {
+            console.error(await res.text())
+        }
+    }
+
+
     return (
         <div className="border-b pb-4 mb-4">
             <div className="flex items-center justify-between mb-4">
                 <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={onClear}>
-                        <Trash2 className="w-4 h-4 mr-1" />
-                        Clear
-                    </Button>
                     <Button variant="outline" size="sm" onClick={toggleSettings}>
                         {showSettings ? (
                             <ChevronUp className="w-4 h-4" />
@@ -57,7 +77,7 @@ function ChatHeader({
             </div>
 
             {showSettings && (
-                <div className="flex flex-wrap items-start gap-6">
+                <div className="flex flex-wrap items-center gap-6">
                     {/* model selector */}
                     <div className="flex flex-col">
                         <label className="text-sm font-medium mb-1">Model</label>
@@ -102,6 +122,13 @@ function ChatHeader({
                             max={2}
                             step={0.1}
                         />
+                    </div>
+                    <div className="flex flex-col min-w-[100px] mt-4">
+                        <Button variant="destructive" size="sm" onClick={onDelete}>
+                            <Trash2 className="w-4 h-4 mr-1" />
+                            Delete Chat
+                        </Button>
+
                     </div>
                 </div>
             )}
