@@ -24,26 +24,12 @@ export function ChatWindow({
     isLoading,
     error,
     onRetry,
-    selectedModelName,
     copyMessage,
-    stop,
 }: Props) {
     return (
-        <div className="relative flex flex-col h-full"> {/* key: relative, h-full or fixed height */}
-            {/* Header */}
-            <div className="p-6 border-b flex-shrink-0">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <span className="badge badge-secondary">{selectedModelName}</span>
-                        <Button variant="outline" size="sm" className="ml-4" onClick={stop}>
-                            Stop
-                        </Button>
-                    </div>
-                </div>
-            </div>
+        <div className="relative flex flex-col h-full">
 
-            {/* Scrollable chat area */}
-            <div className="flex-1 min-h-0 overflow-y-auto px-6 pt-6 pb-32 space-y-4"> {/* pb-32 gives space for the form */}
+            <div className="flex-1 min-h-0 overflow-y-auto px-6 pt-6 pb-32 space-y-4">
                 {messages.length === 0 && (
                     <div className="text-center text-muted-foreground py-8">
                         <p>Start a conversation with the AI assistant.</p>
@@ -88,9 +74,16 @@ export function ChatWindow({
                     disabled={isLoading}
                     className="flex-1"
                 />
-                <Button type="submit" disabled={isLoading || !input.trim()}>
-                    <Send className="w-4 h-4" />
-                </Button>
+
+                {isLoading ? (
+                    <Button variant="destructive" size="sm" onClick={stop}>
+                        Stop
+                    </Button>
+                ) : (
+                    <Button type="submit" disabled={!input.trim()}>
+                        <Send className="w-4 h-4" />
+                    </Button>
+                )}
             </form>
         </div>
     );

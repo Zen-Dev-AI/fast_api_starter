@@ -16,6 +16,7 @@ dependencies = [
     "openai>=1.93.0",
     "passlib[bcrypt]>=1.7.4",
     "psycopg2>=2.9.10",
+    "psycopg2-binary>=2.9.10",
     "psycopg[binary]>=3.2.9",
     "pydantic-settings>=2.10.1",
     "pyjwt>=2.10.1",

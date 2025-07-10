@@ -1,14 +1,17 @@
-import { useState } from "react"
-import { ChatHeader } from "./ChatHeader"
-import { ChatSettings } from "./ChatSettings"
+import { useEffect, useRef, useState } from "react"
+import ChatHeader from "./ChatHeader"
 import { ChatWindow } from "./ChatWindow"
 import { useNavigate, useParams } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
+import { useAuth } from "@/context/authProvider";
+import { useConversations } from "@/context/conversationProvider";
+
 
 
 export default function AIChatPlayground() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { user } = useAuth()
 
     const [input, setInput] = useState("")
     const [messages, setMessages] = useState<any[]>([])
@@ -16,7 +19,9 @@ export default function AIChatPlayground() {
     const [showSettings, setShowSettings] = useState(false)
     const [error, setError] = useState<Error | null>(null)
 
-    const [abortController, setAbortController] = useState<AbortController | null>(null)
+    // const [abortController, setAbortController] = useState<AbortController | null>(null)
+    const abortControllerRef = useRef<AbortController | null>(null)
+
 
     const [selectedModel, setSelectedModel] = useState("gpt-3.5-turbo")
     const models = [
@@ -28,15 +33,59 @@ export default function AIChatPlayground() {
     const [systemPrompt, setSystemPrompt] = useState("")
     const [temperature, setTemperature] = useState([0.7])
 
+    const { addConversation } = useConversations()
+
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setInput(e.target.value)
     }
 
-    const stop = () => {
-        if (abortController) {
-            abortController.abort()
-            setAbortController(null)
-            setIsLoading(false)
+    useEffect(() => {
+        if (!id) return
+
+        const loadHistory = async () => {
+            setIsLoading(true)
+            setError(null)
+            try {
+                const res = await fetch(`http://localhost:8000/langchain/conversations/${id}/messages`, {
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${user?.token}`,
+                    },
+                })
+                if (!res.ok) throw new Error(`Error ${res.status}: ${await res.text()}`)
+                const history = (await res.json()) as { id: number; role: string; content: string }[]
+
+                setMessages(history.map(m => ({ id: m.id, role: m.role, content: m.content })))
+            } catch (err: any) {
+                console.error("Failed to load history", err)
+                setError(err)
+            } finally {
+                setIsLoading(false)
+            }
+        }
+
+        loadHistory()
+    }, [id, user])
+
+
+    /**
+     * Inserts a new assistant message if none exists, or replaces its content
+     * with the full `content` string.
+     */
+    const upsertMessage = (
+        messages: any[],
+        id: string | number,
+        content: string
+    ): any[] => {
+        const idx = messages.findIndex((m) => m.id === id);
+        if (idx > -1) {
+            // update in place
+            const updated = [...messages];
+            updated[idx] = { ...updated[idx], content };
+            return updated;
+        } else {
+            // first time, push a new message
+            return [...messages, { id, role: "assistant", content }];
         }
     }
 
@@ -44,27 +93,29 @@ export default function AIChatPlayground() {
         e.preventDefault();
         if (!input.trim()) return;
 
+        const newId = uuidv4();
+        const isNew = !id
+
         setIsLoading(true);
         setError(null);
-        const newId = uuidv4();
-
-        if (!id) {
-            navigate(`/dashboard/chat/${newId}`, { replace: true });
-        }
 
         const userMessageId = Date.now();
         const userMessage = { id: userMessageId, role: "user", content: input.trim() };
         setMessages((prev) => [...prev, userMessage]);
         setInput("");
 
-        const controller = new AbortController();
-        setAbortController(controller);
+        // setAbortController(controller);
+        const controller = new AbortController()
+        abortControllerRef.current = controller
 
         try {
-            console.log(id || newId)
-            const res = await fetch("http://localhost:8000/langgraph/chat-stream", {
+
+            const res = await fetch("http://localhost:8000/langchain/chat-stream", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${user?.token}`,
+                },
                 body: JSON.stringify({
                     prompt: userMessage.content,
                     model_name: selectedModel,
@@ -89,47 +140,55 @@ export default function AIChatPlayground() {
                 const chunk = decoder.decode(value, { stream: true });
                 const lines = chunk
                     .split("\n")
-                    .filter((line) => line.startsWith("data: "))
-                    .map((line) => line.replace("data: ", ""));
+                    .filter((l) => l.startsWith("data: "))
+                    .map((l) => l.replace("data: ", ""));
 
                 for (const line of lines) {
-                    if (line === "[DONE]") continue;
-                    if (line.startsWith("[ERROR]")) {
-                        setError(new Error(line.replace("[ERROR]", "").trim()));
-                        break;
-                    }
-                    const match = line.match(/content='(.*?)'/);
-                    let contentValue = match ? match[1] : "";
-                    contentValue = contentValue.replace(/\\n/g, "\n");
+                    const data = JSON.parse(line);
 
-                    aiResponse += contentValue;
+                    const chunkText = data.content as string;
 
-                    setMessages((prev) => {
-                        const lastIdx = [...prev]
-                            .map((m, i) => m.id === assistantMessageId ? i : -1)
-                            .filter(i => i !== -1)
-                            .pop();
+                    aiResponse += chunkText;
 
-                        if (lastIdx !== undefined) {
-                            const updated = [...prev];
-                            updated[lastIdx] = {
-                                ...updated[lastIdx],
-                                content: updated[lastIdx].content + contentValue,
-                            };
-                            return updated;
-                        } else {
-                            return [...prev, { id: assistantMessageId, role: "assistant", content: contentValue }];
-                        }
-                    });
+                    setMessages((prev) => upsertMessage(prev, assistantMessageId, aiResponse));
                 }
             }
+
         } catch (err: any) {
-            setError(err);
+            console.log(err.name, abortControllerRef)
+            if (!abortControllerRef.current) setError(err);
         } finally {
             setIsLoading(false);
-            setAbortController(null);
+            // setAbortController(null);
+            // abortControllerRef.current = null
+
+
+            if (isNew && abortControllerRef.current !== null) {
+                // add to global sidebar
+                addConversation({
+                    thread_id: newId,
+                    title: userMessage.content,
+                    created_at: new Date().toISOString(),
+                })
+                // navigate into that new thread
+                navigate(newId)
+            }
+            abortControllerRef.current = null
         }
     };
+
+    const stop = () => {
+        // if (abortController) {
+        //     abortController.abort()
+        //     setIsLoading(false)
+        // }
+        const c = abortControllerRef.current
+        if (c) {
+            c.abort()
+            // abortControllerRef.current = null
+            setIsLoading(false)
+        }
+    }
 
 
     const reload = () => {
@@ -147,13 +206,6 @@ export default function AIChatPlayground() {
         navigator.clipboard.writeText(text)
     }
 
-    const handleTest = async () => {
-        const res = await fetch("http://localhost:8000/langgraph/chat-stream", {
-            method: "GET",
-        });
-
-        console.log(await res.json())
-    }
 
     return (
         <div className="min-h-screen bg-background p-4">
@@ -161,24 +213,17 @@ export default function AIChatPlayground() {
                 <ChatHeader
                     onClear={clearChat}
                     showSettings={showSettings}
-                    toggleSettings={() => setShowSettings(!showSettings)}
+                    toggleSettings={() => setShowSettings((prev) => !prev)}
+                    selectedModel={selectedModel}
+                    setSelectedModel={setSelectedModel}
+                    models={models}
+                    systemPrompt={systemPrompt}
+                    setSystemPrompt={setSystemPrompt}
+                    temperature={temperature}
+                    setTemperature={setTemperature}
                 />
-                <button onClick={handleTest}>TEST </button>
 
-                <div className={`grid gap-6 ${showSettings ? "grid-cols-1 lg:grid-cols-4" : "grid-cols-1"}`}>
-                    {showSettings && (
-                        <div className="lg:col-span-1">
-                            <ChatSettings
-                                selectedModel={selectedModel}
-                                setSelectedModel={setSelectedModel}
-                                models={models}
-                                systemPrompt={systemPrompt}
-                                setSystemPrompt={setSystemPrompt}
-                                temperature={temperature}
-                                setTemperature={setTemperature}
-                            />
-                        </div>
-                    )}
+                <div className={`grid gap-6`}>
 
                     <div className={showSettings ? "lg:col-span-3" : "col-span-1"} style={{ height: "85vh" }}>
                         <ChatWindow

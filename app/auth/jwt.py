@@ -7,7 +7,7 @@ from app.globals.settings import settings
 
 SECRET_KEY = settings.SECRET_KEY
 ALGORITHM = "HS256"
-EXPIRE_MIN = 30
+EXPIRE_MIN = 30000
 
 bearer_scheme = HTTPBearer()
 

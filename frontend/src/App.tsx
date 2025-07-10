@@ -15,6 +15,7 @@ import AppChat from "./pages/Dashboard/ChatDash"
 
 import { ToastContainer } from 'react-toastify';
 import { AppLayout } from "./pages/Dashboard/AppLayout"
+import { ConversationsProvider } from "./context/conversationProvider"
 
 
 const queryClient = new QueryClient()
@@ -24,29 +25,31 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <Router>
-          <Routes>
-            <Route path="/" element={<HomePage />} />
+        <ConversationsProvider>
+          <Router>
+            <Routes>
+              <Route path="/" element={<HomePage />} />
 
-            <Route path="/signin" element={<SignInPage />} />
-            <Route path="/signup" element={<SignUpPage />} />
+              <Route path="/signin" element={<SignInPage />} />
+              <Route path="/signup" element={<SignUpPage />} />
 
-            {/* Protected Dashboard Layout */}
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <AppLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route index element={<DashboardPage />} />
-              <Route path="chat" element={<AppChat />} />
-              <Route path="chat/:id" element={<ChatsPage />} />
-            </Route>
-          </Routes>
-        </Router>
-        <ToastContainer />
+              {/* Protected Dashboard Layout */}
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <AppLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<DashboardPage />} />
+                <Route path="chat" element={<AppChat />} />
+                <Route path="chat/:id" element={<ChatsPage />} />
+              </Route>
+            </Routes>
+          </Router>
+          <ToastContainer />
+        </ConversationsProvider>
       </AuthProvider>
     </QueryClientProvider>
   )

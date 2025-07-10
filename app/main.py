@@ -1,31 +1,19 @@
 from dotenv import load_dotenv
 from fastapi import FastAPI
-import langchain
 from app.globals.db import Base, engine
 from app.globals.settings import settings
 from fastapi.middleware.cors import CORSMiddleware
-from contextlib import asynccontextmanager
-from langgraph.checkpoint.postgres import PostgresSaver
+
 
 #router
 from app.todo.router import router as todo_router
 from app.auth.router import router as auth_router
-from app.chat_langchain import router as chat_router
+from app.chat_langchain.router import router as chat_router
 
 
 load_dotenv()
 
-
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    global checkpointer
-    with PostgresSaver.from_conn_string(settings.DB_URL) as checkpointer:
-        checkpointer.setup()
-        app.state.checkpointer = checkpointer
-        yield
-
-app = FastAPI(lifespan=lifespan)
+app = FastAPI()
 
 origins = [
     settings.FRONT_END_ORIGIN

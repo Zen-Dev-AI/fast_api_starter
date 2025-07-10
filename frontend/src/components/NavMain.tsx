@@ -32,7 +32,7 @@ export function NavMain({
       <SidebarGroupContent className="flex flex-col gap-2">
         <SidebarMenu>
           {items.map((item) => (
-            <SidebarMenuItem key={item.title} className="py-1">
+            <SidebarMenuItem key={`${item?.title}-${item.url}`} className="py-1">
               <SidebarMenuButton onClick={() => navigate(item.url)} tooltip={item.title}>
                 {item.icon && <item.icon />}
                 <span className="text-lg">{item.title}</span>
