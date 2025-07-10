@@ -1,5 +1,5 @@
-import type React from "react"
-import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
+// src/context/authProvider.tsx
+import React, { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 
 interface User {
     id: string
@@ -10,6 +10,7 @@ interface User {
 interface AuthContextType {
     user: User | null
     setUser: React.Dispatch<React.SetStateAction<User | null>>
+    loading: boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -28,22 +29,25 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null)
+    const [loading, setLoading] = useState(true)
 
     useEffect(() => {
         try {
-            const savedUser = JSON.parse(localStorage.getItem("user") || "null")
-            if (savedUser?.email && savedUser?.token && savedUser?.id) {
-                setUser(savedUser)
+            const saved = localStorage.getItem("user")
+            if (saved) {
+                const parsed = JSON.parse(saved)
+                if (parsed?.id && parsed?.email && parsed?.token) {
+                    setUser(parsed)
+                }
             }
         } catch (err) {
             console.error("Failed to restore user from localStorage", err)
+        } finally {
+            setLoading(false)
         }
     }, [])
 
-    const value = {
-        user,
-        setUser
-    }
+    const value = { user, setUser, loading }
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
