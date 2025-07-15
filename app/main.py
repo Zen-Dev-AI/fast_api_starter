@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 #router
 from app.todo.router import router as todo_router
 from app.auth.router import router as auth_router
-from app.chat_langgraph.router import router as chat_router_lang
+from app.chat.router import router as chat_router
 
 from langgraph.checkpoint.postgres import PostgresSaver
 
@@ -48,6 +48,6 @@ Base.metadata.create_all(bind=engine)
 #routers
 app.include_router(todo_router)
 app.include_router(auth_router)
-app.include_router(chat_router_lang)
+app.include_router(chat_router)
 
 print("Server Started")
