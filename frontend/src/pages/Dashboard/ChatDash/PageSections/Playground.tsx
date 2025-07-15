@@ -44,7 +44,8 @@ export default function AIChatPlayground() {
             setIsLoading(true)
             setError(null)
             try {
-                const res = await fetch(`http://localhost:8000/langchain/conversations/${id}/messages`, {
+                // const res = await fetch(`http://localhost:8000/langchain/conversations/${id}/messages`, {
+                const res = await fetch(`http://localhost:8000/langgraph/chat-history/${id}`, {
                     headers: {
                         "Content-Type": "application/json",
                         "Authorization": `Bearer ${user?.token}`,
@@ -53,7 +54,8 @@ export default function AIChatPlayground() {
                 if (!res.ok) throw new Error(`Error ${res.status}: ${await res.text()}`)
                 const history = (await res.json()) as { id: number; role: string; content: string }[]
 
-                setMessages(history.map(m => ({ id: m.id, role: m.role, content: m.content })))
+                console.log("Chat history loaded:", history)
+                setMessages(history.messages.map(m => ({ id: m.id, role: m.role, content: m.content })))
             } catch (err: any) {
                 console.log(err)
             } finally {
@@ -103,7 +105,7 @@ export default function AIChatPlayground() {
 
         try {
 
-            const res = await fetch("http://localhost:8000/langchain/chat-stream", {
+            const res = await fetch("http://localhost:8000/langgraph/chat-stream", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -119,6 +121,8 @@ export default function AIChatPlayground() {
                 signal: controller.signal,
             });
 
+
+
             const reader = res.body?.getReader();
             const decoder = new TextDecoder("utf-8");
             let aiResponse = "";
@@ -128,6 +132,7 @@ export default function AIChatPlayground() {
 
             while (true) {
                 const { value, done } = await reader.read();
+
                 if (done) break;
 
                 const chunk = decoder.decode(value, { stream: true });
@@ -136,10 +141,15 @@ export default function AIChatPlayground() {
                     .filter((l) => l.startsWith("data: "))
                     .map((l) => l.replace("data: ", ""));
 
+                console.log()
+
                 for (const line of lines) {
+                    console.log(line)
+
                     const data = JSON.parse(line);
 
                     const chunkText = data.content as string;
+
 
                     aiResponse += chunkText;
 
