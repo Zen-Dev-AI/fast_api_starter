@@ -4,7 +4,6 @@ from fastapi.responses import StreamingResponse
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.runnables.config import RunnableConfig
 from langgraph.checkpoint.postgres import PostgresSaver
-import logging
 from sqlalchemy.orm import Session
 from app.globals.settings import settings
 from app.globals.dependencies import get_db
@@ -12,9 +11,7 @@ from app.auth.jwt import get_current_user
 from app.auth.models import User
 from .dependencies import get_checkpointer
 from .utils import build_graph
-from pydantic import BaseModel
-from typing import List
-from .schemas import ChatHistoryResponse, ChatRequest, ConversationsResponse, ConversationSummary, MessageResponse
+from .schemas import ChatHistoryResponse, ChatRequest, ConversationsResponse,  MessageResponse
 from . import services
 from fastapi import Depends
 
