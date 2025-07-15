@@ -1,25 +1,22 @@
 import json
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException, Response
 from fastapi.responses import StreamingResponse
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.runnables.config import RunnableConfig
 from langgraph.checkpoint.postgres import PostgresSaver
 import logging
+from sqlalchemy.orm import Session
 from app.globals.settings import settings
+from app.globals.dependencies import get_db
+from app.auth.jwt import get_current_user
+from app.auth.models import User
 from .dependencies import get_checkpointer
 from .utils import build_graph
 from pydantic import BaseModel
 from typing import List
-from .schemas import ChatRequest
+from .schemas import ChatHistoryResponse, ChatRequest, ConversationsResponse, ConversationSummary, MessageResponse
+from . import services
 from fastapi import Depends
-
-class MessageResponse(BaseModel):
-    role: str
-    content: str
-    id: str
-
-class ChatHistoryResponse(BaseModel):
-    messages: List[MessageResponse]
 
 router = APIRouter(prefix="/langgraph", tags=["ai-chat", "langgraph"])
 
@@ -60,8 +57,13 @@ def get_chat_history(
 @router.post("/chat-stream")
 def chat_stream(
     body: ChatRequest,
-    checkpointer: PostgresSaver = Depends(get_checkpointer)
+    checkpointer: PostgresSaver = Depends(get_checkpointer),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
+    
+    # Create or get conversation record for this user
+    services.get_or_create_conversation(db, body.thread_id, current_user.id, body.prompt[:50])
     
     config: RunnableConfig = {"configurable": {"thread_id": body.thread_id}, "run_name": body.thread_id}
 
@@ -100,3 +102,42 @@ def chat_stream(
 
 
     return StreamingResponse(streamer(), media_type="text/event-stream")
+
+@router.get(
+    "/conversations",
+    response_model=ConversationsResponse,
+    summary="List all conversations for the current user",
+)
+def list_my_conversations(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    checkpointer: PostgresSaver = Depends(get_checkpointer),
+):
+    """
+    Retrieve all conversation records belonging to the authenticated user,
+    with summary information from the checkpointer.
+    """
+    conversations = services.get_conversations_by_user(db, checkpointer, current_user.id)
+    return ConversationsResponse(conversations=conversations)
+
+@router.delete(
+    "/conversations/{thread_id}", 
+    status_code=204,
+    summary="Delete a conversation and all its messages",
+)
+def delete_conversation(
+    thread_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    checkpointer: PostgresSaver = Depends(get_checkpointer),
+):
+    """
+    Delete a conversation from both the database and checkpointer
+    """
+    # Verify the conversation belongs to the current user
+    conv = services.repository.get_conversation_by_thread_id(db, thread_id, current_user.id)
+    if not conv:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+
+    services.delete_conversation(db, checkpointer, thread_id, current_user.id)
+    return Response(status_code=204)

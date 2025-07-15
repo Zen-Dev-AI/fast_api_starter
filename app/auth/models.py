@@ -3,7 +3,7 @@
 from sqlalchemy import Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.globals.db import Base
-from app.chat_langchain.models import Conversation
+from app.chat_langgraph.models import Conversation
 
 class User(Base):
     __tablename__ = "users"

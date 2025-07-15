@@ -26,14 +26,16 @@ export function ConversationsProvider({ children }: { children: React.ReactNode 
         if (!user?.token) return;
         async function loadConversations() {
             try {
-                const res = await fetch('http://localhost:8000/langchain/conversations', {
+                const res = await fetch('http://localhost:8000/langgraph/conversations', {
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${user?.token}`,
                     },
                 });
                 if (!res.ok) throw new Error(await res.text());
-                const data = (await res.json()) as ConversationMeta[];
+
+                const data = (await res.json()).conversations;
+                console.log(data)
                 setConversations(
                     data.map(conv => ({
                         title: conv.title || conv.thread_id,
