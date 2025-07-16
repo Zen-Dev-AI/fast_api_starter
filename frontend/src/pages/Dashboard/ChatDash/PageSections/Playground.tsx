@@ -4,6 +4,7 @@ import { ChatWindow } from "./ChatWindow"
 import { useParams, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/context/authProvider";
 import { useConversations } from "@/context/conversationProvider";
+import { useChatHistory, useChatStreamMutation, type ChatMessage } from "@/api/chat";
 
 
 
@@ -14,7 +15,7 @@ export default function AIChatPlayground() {
     const { user } = useAuth()
 
     const [input, setInput] = useState("")
-    const [messages, setMessages] = useState<any[]>([])
+    const [messages, setMessages] = useState<ChatMessage[]>([])
     const [isLoading, setIsLoading] = useState(false)
     const [showSettings, setShowSettings] = useState(false)
     const [error, setError] = useState<Error | null>(null)
@@ -33,38 +34,34 @@ export default function AIChatPlayground() {
 
     const { conversations, addConversation } = useConversations()
 
+    // React Query hooks
+    const { data: chatHistory, isLoading: isHistoryLoading } = useChatHistory(
+        id,
+        !isNew && !!id && !!user?.token
+    )
+    const chatStreamMutation = useChatStreamMutation()
+
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setInput(e.target.value)
     }
 
     useEffect(() => {
-        if (!id || isNew) return
-
-        const loadHistory = async () => {
-            setIsLoading(true)
-            setError(null)
-            try {
-                // const res = await fetch(`http://localhost:8000/langchain/conversations/${id}/messages`, {
-                const res = await fetch(`http://localhost:8000/langgraph/chat-history/${id}`, {
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${user?.token}`,
-                    },
-                })
-                if (!res.ok) throw new Error(`Error ${res.status}: ${await res.text()}`)
-                const history = (await res.json()) as { id: number; role: string; content: string }[]
-
-                console.log("Chat history loaded:", history)
-                setMessages(history.messages.map(m => ({ id: m.id, role: m.role, content: m.content })))
-            } catch (err: any) {
-                console.log(err)
-            } finally {
-                setIsLoading(false)
-            }
+        if (chatHistory?.messages) {
+            setMessages(chatHistory.messages.map(m => ({
+                id: m.id,
+                role: m.role as 'user' | 'assistant',
+                content: m.content
+            })))
         }
+    }, [chatHistory])
 
-        loadHistory()
-    }, [id, user, isNew])
+    useEffect(() => {
+        if (isHistoryLoading) {
+            setIsLoading(true)
+        } else {
+            setIsLoading(false)
+        }
+    }, [isHistoryLoading])
 
 
     /**
@@ -72,10 +69,10 @@ export default function AIChatPlayground() {
      * with the full `content` string.
      */
     const upsertMessage = (
-        messages: any[],
+        messages: ChatMessage[],
         id: string | number,
         content: string
-    ): any[] => {
+    ): ChatMessage[] => {
         const idx = messages.findIndex((m) => m.id === id);
         if (idx > -1) {
             // update in place
@@ -96,66 +93,35 @@ export default function AIChatPlayground() {
         setError(null);
 
         const userMessageId = Date.now();
-        const userMessage = { id: userMessageId, role: "user", content: input.trim() };
+        const userMessage: ChatMessage = {
+            id: userMessageId,
+            role: "user",
+            content: input.trim()
+        };
         setMessages((prev) => [...prev, userMessage]);
         setInput("");
 
         const controller = new AbortController()
         abortControllerRef.current = controller
 
-        try {
+        let aiResponse = "";
+        const assistantMessageId = `ai-${userMessageId}`;
 
-            const res = await fetch("http://localhost:8000/langgraph/chat-stream", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${user?.token}`,
-                },
-                body: JSON.stringify({
+        try {
+            await chatStreamMutation.mutateAsync({
+                payload: {
                     prompt: userMessage.content,
                     model_name: selectedModel,
                     system_message: systemPrompt,
                     temperature: temperature[0],
-                    thread_id: id,
-                }),
+                    thread_id: id || "",
+                },
+                onChunk: (chunkText: string) => {
+                    aiResponse += chunkText;
+                    setMessages((prev) => upsertMessage(prev, assistantMessageId, aiResponse));
+                },
                 signal: controller.signal,
             });
-
-
-
-            const reader = res.body?.getReader();
-            const decoder = new TextDecoder("utf-8");
-            let aiResponse = "";
-            const assistantMessageId = `ai-${userMessageId}`;
-
-            if (!reader) throw new Error("No response stream");
-
-            while (true) {
-                const { value, done } = await reader.read();
-
-                if (done) break;
-
-                const chunk = decoder.decode(value, { stream: true });
-                const lines = chunk
-                    .split("\n")
-                    .filter((l) => l.startsWith("data: "))
-                    .map((l) => l.replace("data: ", ""));
-
-                console.log()
-
-                for (const line of lines) {
-                    console.log(line)
-
-                    const data = JSON.parse(line);
-
-                    const chunkText = data.content as string;
-
-
-                    aiResponse += chunkText;
-
-                    setMessages((prev) => upsertMessage(prev, assistantMessageId, aiResponse));
-                }
-            }
 
         } catch (err: any) {
             if (!abortControllerRef.current) setError(err);

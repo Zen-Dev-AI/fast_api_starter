@@ -9,16 +9,16 @@ import { Eye, EyeOff, AlertCircle } from "lucide-react"
 import { Link, useNavigate } from "react-router-dom"
 import { useAuth } from "@/context/authProvider"
 import { signUpSchema, type SignUpFormData } from "@/types/validations"
-import { registerUser } from "@/api/auth"
+import { useRegisterMutation } from "@/api/auth"
 import { toast } from "react-toastify"
 
 export default function SignUpForm() {
     const [showPassword, setShowPassword] = useState(false)
     const [acceptTerms, setAcceptTerms] = useState(false)
     const [termsError, setTermsError] = useState("")
-    const [loading, setLoading] = useState(false)
     const { user, setUser } = useAuth()
     const navigate = useNavigate()
+    const registerMutation = useRegisterMutation()
 
     const {
         register,
@@ -39,14 +39,13 @@ export default function SignUpForm() {
     }, [user, navigate])
 
     const onSubmit = async (data: SignUpFormData) => {
-        setLoading(true)
         if (!acceptTerms) {
             setTermsError("You must accept the terms and conditions")
             return
         }
 
         try {
-            const res = await registerUser(data)
+            const res = await registerMutation.mutateAsync(data)
             const { access_token, user_id } = res
             const { email } = data
 
@@ -57,15 +56,14 @@ export default function SignUpForm() {
             }
 
             localStorage.setItem("user", JSON.stringify(userObject))
+            localStorage.setItem("token", access_token)
 
             setUser(userObject)
 
             navigate("/dashboard")
         } catch (err: any) {
-            const message = err.response?.data?.detail || "Login failed"
+            const message = err.message || "Registration failed"
             toast.error(message)
-        } finally {
-            setLoading(false)
         }
     }
 
@@ -93,7 +91,7 @@ export default function SignUpForm() {
                                 type="email"
                                 placeholder="m@example.com"
                                 {...register("email")}
-                                disabled={loading}
+                                disabled={registerMutation.isPending}
                                 className={errors.email ? "border-red-500" : ""}
                             />
                             {errors.email && <p className="text-sm text-red-600">{errors.email.message}</p>}
@@ -106,7 +104,7 @@ export default function SignUpForm() {
                                     type={showPassword ? "text" : "password"}
                                     placeholder="Create a password"
                                     {...register("password")}
-                                    disabled={loading}
+                                    disabled={registerMutation.isPending}
                                     className={errors.password ? "border-red-500" : ""}
                                 />
                                 <Button
@@ -115,7 +113,7 @@ export default function SignUpForm() {
                                     size="sm"
                                     className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    disabled={loading}
+                                    disabled={registerMutation.isPending}
                                 >
                                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                 </Button>
@@ -129,7 +127,7 @@ export default function SignUpForm() {
                                 className={`h-4 w-4 rounded border-gray-300 ${termsError ? "border-red-500" : ""}`}
                                 checked={acceptTerms}
                                 onChange={(e) => setAcceptTerms(e.target.checked)}
-                                disabled={loading}
+                                disabled={registerMutation.isPending}
                             />
                             <Label htmlFor="terms" className="text-sm my-4">
                                 I agree to the Terms of Service and Privacy Policy
@@ -138,8 +136,8 @@ export default function SignUpForm() {
                         </div>
                     </CardContent>
                     <CardFooter className="flex flex-col space-y-4">
-                        <Button className="w-full" type="submit" disabled={loading}>
-                            {loading ? "Creating account..." : "Create Account"}
+                        <Button className="w-full" type="submit" disabled={registerMutation.isPending}>
+                            {registerMutation.isPending ? "Creating account..." : "Create Account"}
                         </Button>
                         <p className="text-sm text-center text-muted-foreground">
                             Already have an account?{" "}

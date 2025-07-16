@@ -15,7 +15,7 @@ from .schemas import ChatHistoryResponse, ChatRequest, ConversationsResponse,  M
 from . import services
 from fastapi import Depends
 
-router = APIRouter(prefix="/langgraph", tags=["ai-chat", "langgraph"])
+router = APIRouter(prefix="/chat", tags=["ai-chat", "langgraph"])
 
 @router.get("/chat-history/{thread_id}", response_model=ChatHistoryResponse)
 def get_chat_history(

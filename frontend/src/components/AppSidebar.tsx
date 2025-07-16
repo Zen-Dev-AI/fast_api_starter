@@ -16,8 +16,6 @@ import {
 
 import type { DashNavItemsI } from '@/components/NavMain';
 import { IconDashboard, IconListDetails } from '@tabler/icons-react';
-import { v4 as uuidv4 } from "uuid";
-
 
 export const navMain: DashNavItemsI[] = [
   {
@@ -28,6 +26,11 @@ export const navMain: DashNavItemsI[] = [
   {
     title: 'Chat',
     url: `/dashboard/chat/`,
+    icon: IconListDetails,
+  },
+  {
+    title: 'Todo',
+    url: `/dashboard/todo/`,
     icon: IconListDetails,
   },
 ];

@@ -16,14 +16,14 @@ import { Eye, EyeOff, AlertCircle } from "lucide-react"
 import { Link, useNavigate } from "react-router-dom"
 import { useAuth } from "@/context/authProvider"
 import { signInSchema, type SignInFormData } from "@/types/validations"
-import { loginUser } from "@/api/auth"
+import { useLoginMutation } from "@/api/auth"
 
 export default function SignInForm() {
     const [showPassword, setShowPassword] = useState(false)
-    const [loading, setLoading] = useState(false)
     const [loginError, setLoginError] = useState("")
     const { user, setUser } = useAuth()
     const navigate = useNavigate()
+    const loginMutation = useLoginMutation()
 
     const {
         register,
@@ -44,9 +44,8 @@ export default function SignInForm() {
     }, [user, navigate])
 
     const onSubmit = async (data: SignInFormData) => {
-        setLoading(true)
         try {
-            const res = await loginUser(data)
+            const res = await loginMutation.mutateAsync(data)
             const { access_token, user_id } = res
             const { email } = data
 
@@ -57,15 +56,14 @@ export default function SignInForm() {
             }
 
             localStorage.setItem("user", JSON.stringify(userObject))
+            localStorage.setItem("token", access_token)
 
             setUser(userObject)
 
             navigate("/dashboard")
         } catch (err: any) {
-            const message = err.response?.data?.detail || "Login failed"
+            const message = err.message || "Login failed"
             setLoginError(message)
-        } finally {
-            setLoading(false)
         }
     }
 
@@ -93,7 +91,7 @@ export default function SignInForm() {
                                 type="email"
                                 placeholder="m@example.com"
                                 {...register("email")}
-                                disabled={loading}
+                                disabled={loginMutation.isPending}
                                 className={errors.email ? "border-red-500" : ""}
                             />
                             {errors.email && (
@@ -108,7 +106,7 @@ export default function SignInForm() {
                                     type={showPassword ? "text" : "password"}
                                     placeholder="Your password"
                                     {...register("password")}
-                                    disabled={loading}
+                                    disabled={loginMutation.isPending}
                                     className={errors.password ? "border-red-500" : ""}
                                 />
                                 <Button
@@ -117,7 +115,7 @@ export default function SignInForm() {
                                     size="sm"
                                     className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    disabled={loading}
+                                    disabled={loginMutation.isPending}
                                 >
                                     {showPassword ? (
                                         <EyeOff className="h-4 w-4" />
@@ -132,8 +130,8 @@ export default function SignInForm() {
                         </div>
                     </CardContent>
                     <CardFooter className="flex flex-col space-y-4 mt-8">
-                        <Button className="w-full" type="submit" disabled={loading}>
-                            {loading ? "Signing in..." : "Sign In"}
+                        <Button className="w-full" type="submit" disabled={loginMutation.isPending}>
+                            {loginMutation.isPending ? "Signing in..." : "Sign In"}
                         </Button>
                         <p className="text-sm text-center text-muted-foreground">
                             Don&apos;t have an account?{" "}
