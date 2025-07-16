@@ -54,7 +54,7 @@ export default function TodoExample() {
         }
     };
 
-    const handleToggleTodo = async (todo: TodoItem) => {
+    const handleToggleTodo = async (todo: Todo) => {
         try {
             await updateTodoMutation.mutateAsync({
                 id: todo.id,
