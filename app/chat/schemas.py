@@ -1,3 +1,4 @@
+from unittest.mock import Base
 from pydantic import BaseModel, Field
 from typing import List, Optional
 from datetime import datetime
@@ -18,7 +19,6 @@ class ConversationSummary(BaseModel):
 
 class ConversationsResponse(BaseModel):
     conversations: List[ConversationSummary]
-
 
 class MessageResponse(BaseModel):
     role: str

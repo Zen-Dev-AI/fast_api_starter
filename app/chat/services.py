@@ -7,6 +7,7 @@ from typing import List
 from . import repository
 from .models import Conversation
 from .schemas import ConversationSummary
+from .utils import build_graph
 
 def get_or_create_conversation(db: Session, thread_id: str, user_id: int, title: str) -> Conversation:
     return repository.get_or_create_conversation(db, thread_id, user_id, title)
@@ -20,26 +21,27 @@ def get_conversations_by_user(db: Session, checkpointer: PostgresSaver, user_id:
     
     conversations = []
     
+    # Build graph to get state snapshots
+    graph = build_graph(checkpointer)
+    
     for conv in user_conversations:
-        # Get conversation details from checkpointer
+        # Get conversation details from checkpointer using graph.get_state()
         config: RunnableConfig = {"configurable": {"thread_id": conv.thread_id}}
         
         try:
-            # Get the latest checkpoint for this thread
-            checkpoints = list(checkpointer.list(config, limit=1))
+            # Get the state snapshot for this thread
+            state_snapshot = graph.get_state(config)
             
             last_message_at = None
             message_count = 0
             
-            if checkpoints:
-                checkpoint_tuple = checkpoints[0]
-                channel_values = checkpoint_tuple.checkpoint.get('channel_values', {})
-                messages = channel_values.get('messages', [])
+            if state_snapshot and state_snapshot.values:
+                messages = state_snapshot.values.get('messages', [])
                 message_count = len(messages)
                 
-                # Get timestamp from the checkpoint
-                if hasattr(checkpoint_tuple, 'metadata') and checkpoint_tuple.metadata:
-                    last_message_at = checkpoint_tuple.metadata.get('created_at')
+                # Get timestamp from the checkpoint metadata
+                if hasattr(state_snapshot, 'metadata') and state_snapshot.metadata:
+                    last_message_at = state_snapshot.metadata.get('created_at')
                     if isinstance(last_message_at, str):
                         try:
                             last_message_at = datetime.fromisoformat(last_message_at.replace('Z', '+00:00'))
@@ -73,5 +75,13 @@ def delete_conversation(db: Session, checkpointer: PostgresSaver, thread_id: str
     # Delete from database
     repository.delete_conversation(db, thread_id, user_id)
     
-    # Delete from checkpointer
-    checkpointer.delete_thread(thread_id)
+    # Delete from checkpointer using graph
+    graph = build_graph(checkpointer)
+    config: RunnableConfig = {"configurable": {"thread_id": thread_id}}
+    
+    # Clear the thread state
+    try:
+        graph.update_state(config, None, as_node="__start__")
+    except Exception:
+        # Fallback to direct checkpointer delete if graph method fails
+        checkpointer.delete_thread(thread_id)

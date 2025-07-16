@@ -3,8 +3,16 @@ from langchain.chat_models import init_chat_model
 
 import logging
 
-def build_graph(model_name: str, temperature: float, checkpointer):
-    model = init_chat_model(model_name, model_provider="openai", temperature=temperature)
+def build_graph(
+    checkpointer,
+    model_name: str = "gpt-3.5-turbo",
+    temperature: float = 0.7,
+):
+    model = init_chat_model(
+        model_name,
+        model_provider="openai",
+        temperature=temperature,
+    )
 
     def call_model(state: MessagesState):
         try:

@@ -1,7 +1,7 @@
 import json
 from fastapi import APIRouter, HTTPException, Response
 from fastapi.responses import StreamingResponse
-from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.messages import HumanMessage, SystemMessage, BaseMessage
 from langchain_core.runnables.config import RunnableConfig
 from langgraph.checkpoint.postgres import PostgresSaver
 from sqlalchemy.orm import Session
@@ -17,38 +17,41 @@ from fastapi import Depends
 
 router = APIRouter(prefix="/chat", tags=["ai-chat", "langgraph"])
 
+
+
 @router.get("/chat-history/{thread_id}", response_model=ChatHistoryResponse)
 def get_chat_history(
     thread_id: str,
     checkpointer: PostgresSaver = Depends(get_checkpointer)
 ):
     config: RunnableConfig = {"configurable": {"thread_id": thread_id}, "run_name": thread_id}
-    conversation_tuple = checkpointer.get_tuple(config)
-    
-    messages = []
-    if conversation_tuple:
-        channel_values = conversation_tuple[1].get('channel_values', {})
-        history_messages = channel_values.get('messages', [])
-        for message in history_messages:
-            # Get the role based on message type
-            if isinstance(message, HumanMessage):
-                role = "user"
-            elif isinstance(message, SystemMessage):
-                role = "system"
-            else:
-                role = "assistant"
-                
-            # Ensure content is a string
-            content = message.content
-            if not isinstance(content, str):
-                content = str(content) if content is not None else ""
 
-            messages.append(MessageResponse(
-                role=role,
-                content=content,
-                id=getattr(message, 'id', '')
-            ))
-    
+    graph = build_graph(checkpointer)    
+    state_snapshot = graph.get_state(config)
+
+    history_messages = []
+    if state_snapshot:
+        history_messages = state_snapshot.values.get("messages", [])
+
+    print(f"Retrieved {history_messages} messages for thread {thread_id}")
+
+    # Process messages for the response
+    messages = []
+    for message in history_messages:
+        if isinstance(message, HumanMessage):
+            role = "user"
+        elif isinstance(message, SystemMessage):
+            role = "system"
+        else:
+            role = "assistant"
+        
+        messages.append(MessageResponse(
+            role=role,
+            content=str(message.content),
+            id=getattr(message, 'id', '')
+        ))
+    print(f"Processed {messages} messages for response")
+    # return "test"
     return ChatHistoryResponse(messages=messages)
 
 @router.post("/chat-stream")
@@ -62,25 +65,37 @@ def chat_stream(
     # Create or get conversation record for this user
     services.get_or_create_conversation(db, body.thread_id, current_user.id, body.prompt[:50])
     
-    config: RunnableConfig = {"configurable": {"thread_id": body.thread_id}, "run_name": body.thread_id}
+    config: RunnableConfig = {"configurable": {"thread_id": body.thread_id}, "run_name": body.thread_id} 
+    
+    graph = build_graph(checkpointer=checkpointer, model_name=body.model_name, temperature=body.temperature )
+    state_snapshot = graph.get_state(config)
 
-    # 2. Use the checkpointer's 'get' method which handles the decoding for you
-    conversation_tuple = checkpointer.get_tuple(config)
-    
+    history_messages = []
+    if state_snapshot:
+        history_messages = state_snapshot.values.get("messages", [])
+
+    # Process messages for the response
     messages = []
-    if conversation_tuple:
-        # Extract messages from channel_values
-        channel_values = conversation_tuple[1].get('channel_values', {})
-        history_messages = channel_values.get('messages', [])
-        for message in history_messages:
-            print(f"Role: {message.__class__.__name__}, Content: {message.content}")
-            messages.append(message)
+    for message in history_messages:
+        if isinstance(message, HumanMessage):
+            role = "user"
+        elif isinstance(message, SystemMessage):
+            role = "system"
+        else:
+            role = "assistant"
+        
+        messages.append(MessageResponse(
+            role=role,
+            content=str(message.content),
+            id=getattr(message, 'id', '')
+        ))
     
+    print(messages)
+
     if body.system_message:
         messages.append(SystemMessage(content=body.system_message))
     messages.append(HumanMessage(content=body.prompt))
 
-    graph = build_graph(body.model_name, body.temperature, checkpointer)
 
     def streamer():
         try:
