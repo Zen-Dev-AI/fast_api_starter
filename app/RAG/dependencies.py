@@ -8,7 +8,7 @@ from langchain_pinecone import PineconeVectorStore
 from pinecone import Pinecone
 from langchain_openai import OpenAIEmbeddings
 from langchain.schema import Document
-from app.globals.settings import settings
+from app.globals.config import settings
 
 
 @lru_cache()

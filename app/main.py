@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from app.globals.db import Base, engine
-from app.globals.settings import settings
+from app.globals.config import settings
 from fastapi.middleware.cors import CORSMiddleware
 
 

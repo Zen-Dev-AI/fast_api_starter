@@ -5,7 +5,7 @@ from langchain_core.messages import HumanMessage, SystemMessage, BaseMessage
 from langchain_core.runnables.config import RunnableConfig
 from langgraph.checkpoint.postgres import PostgresSaver
 from sqlalchemy.orm import Session
-from app.globals.settings import settings
+from app.globals.config import settings
 from app.globals.dependencies import get_db
 from app.auth.jwt import get_current_user
 from app.auth.models import User
