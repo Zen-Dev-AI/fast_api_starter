@@ -9,14 +9,12 @@ from app.globals.settings import settings
 from app.globals.dependencies import get_db
 from app.auth.jwt import get_current_user
 from app.auth.models import User
-from .dependencies import get_checkpointer
-from .utils import build_graph
+from .dependencies import get_checkpointer, build_graph
 from .schemas import ChatHistoryResponse, ChatRequest, ConversationsResponse,  MessageResponse
 from . import services
 from fastapi import Depends
 
 router = APIRouter(prefix="/chat", tags=["ai-chat", "langgraph"])
-
 
 
 @router.get("/chat-history/{thread_id}", response_model=ChatHistoryResponse)
@@ -90,7 +88,6 @@ def chat_stream(
             id=getattr(message, 'id', '')
         ))
     
-    print(messages)
 
     if body.system_message:
         messages.append(SystemMessage(content=body.system_message))

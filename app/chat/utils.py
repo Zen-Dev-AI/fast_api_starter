@@ -1,30 +1,20 @@
-from langgraph.graph import StateGraph, MessagesState
-from langchain.chat_models import init_chat_model
+from langchain_core.prompts import PromptTemplate
 
-import logging
 
-def build_graph(
-    checkpointer,
-    model_name: str = "gpt-3.5-turbo",
-    temperature: float = 0.7,
-):
-    model = init_chat_model(
-        model_name,
-        model_provider="openai",
-        temperature=temperature,
-    )
+def get_custom_rag_prompt():
+    """
+    Returns a custom RAG prompt template.
+    This template is designed to provide context and answer questions concisely.
+    """
+    # Define the template with placeholders for context and question
+    template = """Use the following pieces of context to answer the question at the end.
+    If you don't know the answer, just say that you don't know, don't try to make up an answer.
+    Use three sentences maximum and keep the answer as concise as possible.
 
-    def call_model(state: MessagesState):
-        try:
-            response = model.invoke(state["messages"])
-            return {"messages": [response]}
-        except Exception as e:
-            logging.error(f"Error in call_model: {e}", exc_info=True)
-            return {"messages": [], "error": str(e)}
+    {context}
 
-    builder = StateGraph(MessagesState)
-    builder.add_node("call_model", call_model)
-    builder.set_entry_point("call_model")
-    builder.set_finish_point("call_model")
+    Question: {question}
 
-    return builder.compile(checkpointer=checkpointer)
+    Helpful Answer:"""
+    custom_rag_prompt = PromptTemplate.from_template(template)
+    return custom_rag_prompt

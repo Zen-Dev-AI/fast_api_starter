@@ -7,7 +7,7 @@ from typing import List
 from . import repository
 from .models import Conversation
 from .schemas import ConversationSummary
-from .utils import build_graph
+from .dependencies import build_graph
 
 def get_or_create_conversation(db: Session, thread_id: str, user_id: int, title: str) -> Conversation:
     return repository.get_or_create_conversation(db, thread_id, user_id, title)

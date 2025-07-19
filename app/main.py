@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.todo.router import router as todo_router
 from app.auth.router import router as auth_router
 from app.chat.router import router as chat_router
+from app.RAG.router import router as rag_router
 
 from langgraph.checkpoint.postgres import PostgresSaver
 
@@ -27,7 +28,8 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 origins = [
-    settings.FRONT_END_ORIGIN
+    settings.FRONT_END_ORIGIN,
+    "*"
 ]
 
 app.add_middleware(
@@ -49,5 +51,6 @@ Base.metadata.create_all(bind=engine)
 app.include_router(todo_router)
 app.include_router(auth_router)
 app.include_router(chat_router)
+app.include_router(rag_router)
 
 print("Server Started")
