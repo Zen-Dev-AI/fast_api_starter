@@ -4,26 +4,22 @@ FastAPI routes for Retrieval-Augmented Generation functionality with dependency 
 """
 
 from ast import List
-from typing import Annotated, Literal, TypedDict
+from typing import TypedDict
 from fastapi import APIRouter, UploadFile, File, BackgroundTasks, Depends
 from langchain_pinecone import PineconeVectorStore
 from langchain.schema import Document
 from pydantic import BaseModel
 
-from app.chat.utils import get_custom_rag_prompt
 
 from .schemas import UploadResponse, ErrorResponse
 from .services import process_and_index
 from .dependencies import get_vector_store
 from .utils import validate_file_type
 
-from typing import Literal
-
-
 from langchain_core.documents import Document
 
 from langgraph.graph import START, StateGraph
-from typing_extensions import Annotated, List, TypedDict
+from typing_extensions import List, TypedDict
 from langchain.chat_models import init_chat_model
 
 
@@ -32,23 +28,12 @@ llm = init_chat_model(
         model="gpt-3.5-turbo",
         model_provider="openai",
         temperature=0.7,
-    )
+)
 
 
-
-class Search(TypedDict):
-    """Search query."""
-
-    query: Annotated[str, ..., "Search query to run."]
-    section: Annotated[
-        Literal["beginning", "middle", "end"],
-        ...,
-        "Section to query.",
-    ]
 
 class State(TypedDict):
     question: str
-    query: Search
     context: List[Document]
     answer: str
 
@@ -81,21 +66,13 @@ def model_response_test(
         return {"context": retrieved_docs}
 
 
-    def generate(state: State):
-        docs_content = "\n\n".join(doc.page_content for doc in state["context"])
-        messages = get_custom_rag_prompt().invoke({"question": state["question"], "context": docs_content})
-        response = llm.invoke(messages)
-        return {"answer": response.content}
-
-
-    graph_builder = StateGraph(State).add_sequence([ retrieve, generate])
+    graph_builder = StateGraph(State).add_sequence([ retrieve])
     graph_builder.add_edge(START, "retrieve")
     graph = graph_builder.compile()
 
     # Initialize state with the user's question
     initial_state: State = {
         "question": body.prompt,
-        "query": Search(query="", section="beginning"),  # Will be set by analyze_query if used
         "context": [],
         "answer": ""
     }
@@ -130,7 +107,7 @@ def model_response_test(
 async def upload_dummy_documents(
     vector_store: PineconeVectorStore = Depends(get_vector_store),
 ):
-    """Upload dummy documents to the vector store for testing. Test different vector store configurations."""
+    """Upload dummy documents to the vector store for testing different vector store configurations."""
     dummy_docs = [
         Document(
             page_content="This is the first dummy chunk of text. It's short and sweet.",
@@ -140,8 +117,9 @@ async def upload_dummy_documents(
             page_content="Here's the second chunk, also made up for testing purposes.",
             metadata={"source": "dummy1.txt", "chunk": 2},
         ),
+        # Test RAG by asking a question about Elly. 
         Document(
-            page_content="Elly works at microsoft.",
+            page_content="Elly is a product manager and works at microsoft.",
             metadata={"source": "dummy1.txt", "chunk": 3},
         ),
     ]
