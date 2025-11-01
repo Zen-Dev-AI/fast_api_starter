@@ -4,14 +4,14 @@ import { Button } from "@/components/ui/button"
 import { Link, useLocation } from "react-router-dom"
 import { useAuth } from "@/context/authProvider"
 import { LogOut, User, Home } from "lucide-react"
-import { logout } from "@/api/auth"
+import { authApi } from "@/api/auth"
 
 export default function Header() {
     const { user, setUser } = useAuth()
     const location = useLocation()
 
     const handleLogout = () => {
-        logout()
+        authApi.logout()
         setUser(null)
     }
 

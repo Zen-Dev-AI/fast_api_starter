@@ -9,10 +9,9 @@ class Settings(BaseSettings):
     FRONT_END_ORIGIN: str = ""
     DB_URL: str = ''
     OPENAI_API_KEY: str = ''
-
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
+    PINECONE_API_KEY: str = ''
+    PINECONE_ENV: str = ''  
+    PINECONE_INDEX_NAME: str = 'langgraph-docs'
 
 
 settings = Settings()

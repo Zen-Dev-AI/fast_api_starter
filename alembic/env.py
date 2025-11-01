@@ -10,7 +10,7 @@ from alembic import context
 config = context.config
 
 from app.globals.db import Base
-from app.globals.settings import settings
+from app.globals.config import settings
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.

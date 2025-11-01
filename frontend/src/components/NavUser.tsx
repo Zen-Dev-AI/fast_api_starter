@@ -25,14 +25,14 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { useAuth } from "@/context/authProvider"
-import { logout } from "@/api/auth"
+import { authApi } from "@/api/auth"
 
 export function NavUser() {
   const { isMobile } = useSidebar()
   const { user, setUser } = useAuth()
 
   const handleLogout = () => {
-    logout()
+    authApi.logout()
     setUser(null)
   }
 

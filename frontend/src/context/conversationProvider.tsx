@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { DashNavItemsI } from '@/components/NavMain';
-import { useAuth } from '@/context/authProvider';
+import { useConversations as useConversationsQuery } from '@/api/conversations';
 
 export interface ConversationMeta {
     thread_id: string;
@@ -14,41 +14,31 @@ interface ConversationsContextValue {
     conversations: DashNavItemsI[];
     addConversation: (meta: ConversationMeta) => void;
     removeConversation: (threadId: string) => void;
+    isLoading: boolean;
+    error: Error | null;
 }
 
 const ConversationsContext = createContext<ConversationsContextValue | undefined>(undefined);
 
 export function ConversationsProvider({ children }: { children: React.ReactNode }) {
-    const { user } = useAuth();
     const [conversations, setConversations] = useState<DashNavItemsI[]>([]);
 
+    // Use React Query to fetch conversations
+    const { data: conversationsData, isLoading, error } = useConversationsQuery();
+
+    // Update local state when React Query data changes
     useEffect(() => {
-        if (!user?.token) return;
-        async function loadConversations() {
-            try {
-                const res = await fetch('http://localhost:8000/langchain/conversations', {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${user?.token}`,
-                    },
-                });
-                if (!res.ok) throw new Error(await res.text());
-                const data = (await res.json()) as ConversationMeta[];
-                setConversations(
-                    data.map(conv => ({
-                        title: conv.title || conv.thread_id,
-                        url: `/dashboard/chat/${conv.thread_id}`,
-                    }))
-                );
-            } catch {
-                // handle or ignore
-            }
+        if (conversationsData?.conversations) {
+            setConversations(
+                conversationsData.conversations.map((conv) => ({
+                    title: conv.title || conv.thread_id,
+                    url: `/dashboard/chat/${conv.thread_id}`,
+                }))
+            );
         }
-        loadConversations();
-    }, [user]);
+    }, [conversationsData]);
 
     const addConversation = (meta: ConversationMeta) => {
-        meta
         const newItem: DashNavItemsI = {
             title: meta.title || meta.thread_id,
             url: `/dashboard/chat/${meta.thread_id}`,
@@ -63,7 +53,13 @@ export function ConversationsProvider({ children }: { children: React.ReactNode 
     }
 
     return (
-        <ConversationsContext.Provider value={{ conversations, addConversation, removeConversation }}>
+        <ConversationsContext.Provider value={{
+            conversations,
+            addConversation,
+            removeConversation,
+            isLoading,
+            error
+        }}>
             {children}
         </ConversationsContext.Provider>
     );

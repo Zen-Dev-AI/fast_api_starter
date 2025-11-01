@@ -1,10 +1,20 @@
+from langgraph.checkpoint.postgres import PostgresSaver
+from fastapi import Request
 from langgraph.graph import StateGraph, MessagesState
 from langchain.chat_models import init_chat_model
 
 import logging
 
-def build_graph(model_name: str, temperature: float, checkpointer):
-    model = init_chat_model(model_name, model_provider="openai", temperature=temperature)
+def build_graph(
+    checkpointer,
+    model_name: str = "gpt-3.5-turbo",
+    temperature: float = 0.7,
+):
+    model = init_chat_model(
+        model_name,
+        model_provider="openai",
+        temperature=temperature,
+    )
 
     def call_model(state: MessagesState):
         try:
@@ -20,3 +30,8 @@ def build_graph(model_name: str, temperature: float, checkpointer):
     builder.set_finish_point("call_model")
 
     return builder.compile(checkpointer=checkpointer)
+
+
+# initialized in main.py
+def get_checkpointer(request: Request) -> PostgresSaver:
+    return request.app.state.checkpointer

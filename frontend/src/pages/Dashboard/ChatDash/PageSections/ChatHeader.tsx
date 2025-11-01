@@ -9,10 +9,10 @@ import {
 } from "@/components/ui/select"
 import { Slider } from "@/components/ui/slider"
 import { Textarea } from "@/components/ui/textarea"
-import { useAuth } from "@/context/authProvider"
 import { useConversations } from "@/context/conversationProvider"
 import { Trash2, ChevronUp, Settings as SettingsIcon } from "lucide-react"
 import { useNavigate } from "react-router-dom"
+import { apiClient } from "@/api/client"
 
 interface ModelOption { id: string; name: string }
 
@@ -43,21 +43,14 @@ function ChatHeader({
 }: Props) {
     const navigate = useNavigate()
     const { removeConversation } = useConversations()
-    const { user } = useAuth()
 
     const onDelete = async () => {
-        const res = await fetch(
-            `http://localhost:8000/langchain/conversations/${threadId}`,
-            {
-                method: "DELETE",
-                headers: { "Authorization": `Bearer ${user?.token}` },
-            }
-        )
-        if (res.ok) {
+        try {
+            await apiClient.delete(`chat/conversations/${threadId}`)
             removeConversation(threadId)
             navigate("/dashboard", { replace: true })
-        } else {
-            console.error(await res.text())
+        } catch (error) {
+            console.error("Failed to delete conversation:", error)
         }
     }
 
