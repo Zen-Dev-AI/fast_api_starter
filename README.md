@@ -26,5 +26,6 @@ A modern and modular FastAPI application for managing Todo items with full CRUD 
 ```uv pip install .```
 
 
+
 ### Run Project
 ```uv run fastapi dev```
