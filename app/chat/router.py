@@ -22,17 +22,24 @@ def get_chat_history(
     thread_id: str,
     checkpointer: PostgresSaver = Depends(get_checkpointer)
 ):
-    config: RunnableConfig = {"configurable": {"thread_id": thread_id}, "run_name": thread_id}
-
-    graph = build_graph(checkpointer)    
+    """
+    Retrieve the chat history for a given thread ID by directly accessing
+    the graph state using the checkpointer.
+    """
+    # Build the graph with the checkpointer
+    graph = build_graph(checkpointer=checkpointer)
+    
+    # Configure with thread_id to access this specific conversation
+    config: RunnableConfig = {"configurable": {"thread_id": thread_id}}
+    
+    # Get the current state snapshot for this thread
     state_snapshot = graph.get_state(config)
-
+    
+    # Extract messages from the state
     history_messages = []
-    if state_snapshot:
+    if state_snapshot and state_snapshot.values:
         history_messages = state_snapshot.values.get("messages", [])
-
-    print(f"Retrieved {history_messages} messages for thread {thread_id}")
-
+    
     # Process messages for the response
     messages = []
     for message in history_messages:
@@ -48,8 +55,7 @@ def get_chat_history(
             content=str(message.content),
             id=getattr(message, 'id', '')
         ))
-    print(f"Processed {messages} messages for response")
-    # return "test"
+    
     return ChatHistoryResponse(messages=messages)
 
 @router.post("/chat-stream")
@@ -65,30 +71,15 @@ def chat_stream(
     
     config: RunnableConfig = {"configurable": {"thread_id": body.thread_id}, "run_name": body.thread_id} 
     
-    graph = build_graph(checkpointer=checkpointer, model_name=body.model_name, temperature=body.temperature )
+    graph = build_graph(checkpointer=checkpointer, model_name=body.model_name, temperature=body.temperature)
     state_snapshot = graph.get_state(config)
 
-    history_messages = []
-    if state_snapshot:
-        history_messages = state_snapshot.values.get("messages", [])
-
-    # Process messages for the response
+    # Get history messages directly - they're already LangChain message objects
     messages = []
-    for message in history_messages:
-        if isinstance(message, HumanMessage):
-            role = "user"
-        elif isinstance(message, SystemMessage):
-            role = "system"
-        else:
-            role = "assistant"
-        
-        messages.append(MessageResponse(
-            role=role,
-            content=str(message.content),
-            id=getattr(message, 'id', '')
-        ))
+    if state_snapshot and state_snapshot.values:
+        messages = list(state_snapshot.values.get("messages", []))
     
-
+    # Add system message and user prompt
     if body.system_message:
         messages.append(SystemMessage(content=body.system_message))
     messages.append(HumanMessage(content=body.prompt))
