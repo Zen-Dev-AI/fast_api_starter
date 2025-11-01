@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 #router
 from app.todo.router import router as todo_router
 from app.auth.router import router as auth_router
-from app.chat.router import router as chat_router
+from app.chat_langgraph.router import router as chat_router
 from app.RAG.router import router as rag_router
 
 from langgraph.checkpoint.postgres import PostgresSaver
