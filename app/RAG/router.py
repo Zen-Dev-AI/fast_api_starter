@@ -28,7 +28,6 @@ llm = init_chat_model(
 )
 
 
-
 class State(TypedDict):
     question: str
     context: List[Document]
