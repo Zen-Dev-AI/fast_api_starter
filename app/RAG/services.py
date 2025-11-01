@@ -3,7 +3,6 @@ RAG Services
 Contains text processing and document indexing logic with dependency injection
 """
 
-from langchain.schema import Document
 from langchain_pinecone import PineconeVectorStore
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from app.RAG.utils import clean_text

@@ -3,13 +3,10 @@ RAG Router
 FastAPI routes for Retrieval-Augmented Generation functionality with dependency injection
 """
 
-from ast import List
-from typing import TypedDict
+from typing import List, TypedDict
 from fastapi import APIRouter, UploadFile, File, BackgroundTasks, Depends
 from langchain_pinecone import PineconeVectorStore
-from langchain.schema import Document
 from pydantic import BaseModel
-
 
 from app.RAG.schemas import UploadResponse, ErrorResponse
 from app.RAG.services import process_and_index
@@ -19,7 +16,7 @@ from app.RAG.utils import validate_file_type
 from langchain_core.documents import Document
 
 from langgraph.graph import START, StateGraph
-from typing_extensions import List, TypedDict
+
 from langchain.chat_models import init_chat_model
 
 

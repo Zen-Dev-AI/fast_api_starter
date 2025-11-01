@@ -5,7 +5,6 @@ from app.globals.db import Base, engine
 from app.globals.config import settings
 from fastapi.middleware.cors import CORSMiddleware
 
-
 #router
 from app.todo.router import router as todo_router
 from app.auth.router import router as auth_router
@@ -15,7 +14,6 @@ from app.RAG.router import router as rag_router
 from langgraph.checkpoint.postgres import PostgresSaver
 
 load_dotenv()
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
