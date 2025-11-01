@@ -9,9 +9,9 @@ from app.globals.config import settings
 from app.globals.dependencies import get_db
 from app.auth.jwt import get_current_user
 from app.auth.models import User
-from .dependencies import get_checkpointer, build_graph
-from .schemas import ChatHistoryResponse, ChatRequest, ConversationsResponse,  MessageResponse
-from . import services
+from app.chat.dependencies import get_checkpointer, build_graph
+from app.chat.schemas import ChatHistoryResponse, ChatRequest, ConversationsResponse,  MessageResponse
+from app.chat import services
 from fastapi import Depends
 
 router = APIRouter(prefix="/chat", tags=["ai-chat", "langgraph"])

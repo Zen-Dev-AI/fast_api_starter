@@ -2,7 +2,7 @@ import jwt
 from datetime import datetime, timedelta, timezone
 from fastapi import HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from .repository import get_user_by_email
+from app.auth.repository import get_user_by_email
 from app.globals.config import settings
 
 SECRET_KEY = settings.SECRET_KEY

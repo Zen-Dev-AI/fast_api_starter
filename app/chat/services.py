@@ -4,10 +4,10 @@ from langchain_core.runnables.config import RunnableConfig
 from langchain_core.messages import HumanMessage, SystemMessage
 from datetime import datetime
 from typing import List
-from . import repository
-from .models import Conversation
-from .schemas import ConversationSummary
-from .dependencies import build_graph
+from app.chat import repository
+from app.chat.models import Conversation
+from app.chat.schemas import ConversationSummary
+from app.chat.dependencies import build_graph
 
 def get_or_create_conversation(db: Session, thread_id: str, user_id: int, title: str) -> Conversation:
     return repository.get_or_create_conversation(db, thread_id, user_id, title)

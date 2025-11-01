@@ -1,8 +1,7 @@
 from sqlalchemy.orm import Session
-from .models import User
+from app.auth.models import User
 from app.auth.utils import  hash_password
 from fastapi import HTTPException
-from .models import User
 from app.globals.db import SessionLocal
 
 def get_user_by_email(email: str) -> User | None:

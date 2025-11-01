@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.globals.dependencies import get_db
 from app.todo.schemas import TodoCreate, TodoUpdate, TodoOut
-from . import services
+from app.todo import services
 import traceback
 
 router = APIRouter(prefix="/todos", tags=["todos"])

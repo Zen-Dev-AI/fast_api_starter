@@ -2,10 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from app.auth.schemas import LoginRequest, RegisterRequest
 from app.auth.utils import verify_password
 from app.auth.jwt import create_access_token, get_current_user, EXPIRE_MIN
-from .models import User
+from app.auth.models import User
 from sqlalchemy.orm import Session
 from datetime import timedelta
-from .repository import get_user_by_email, register_user
+from app.auth.repository import get_user_by_email, register_user
 from app.globals.dependencies import get_db
 
 router = APIRouter(prefix="/auth", tags=["auth"])

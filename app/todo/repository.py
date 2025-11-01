@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
-from .models import Todo
-from .schemas import TodoCreate, TodoUpdate
+from app.todo.models import Todo
+from app.todo.schemas import TodoCreate, TodoUpdate
 
 def create_todo(db: Session, data: TodoCreate) -> Todo:
     todo = Todo(**data.model_dump())

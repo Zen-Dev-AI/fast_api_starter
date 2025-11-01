@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from app.todo.schemas import TodoCreate, TodoUpdate
-from . import repository
+from app.todo import repository
 
 def create_todo(db: Session, data: TodoCreate):
     return repository.create_todo(db, data)

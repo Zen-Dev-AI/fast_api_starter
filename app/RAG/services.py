@@ -6,7 +6,7 @@ Contains text processing and document indexing logic with dependency injection
 from langchain.schema import Document
 from langchain_pinecone import PineconeVectorStore
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from .utils import clean_text
+from app.RAG.utils import clean_text
 
 
 def process_and_index(contents: bytes, filename: str, vector_store: PineconeVectorStore) -> str:

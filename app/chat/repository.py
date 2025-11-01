@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from .models import Conversation
+from app.chat.models import Conversation
 from typing import List
 
 def get_conversation_by_thread_id(db: Session, thread_id: str, user_id: int) -> Conversation | None:

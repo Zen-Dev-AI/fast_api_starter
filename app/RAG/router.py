@@ -11,10 +11,10 @@ from langchain.schema import Document
 from pydantic import BaseModel
 
 
-from .schemas import UploadResponse, ErrorResponse
-from .services import process_and_index
-from .dependencies import get_vector_store
-from .utils import validate_file_type
+from app.RAG.schemas import UploadResponse, ErrorResponse
+from app.RAG.services import process_and_index
+from app.RAG.dependencies import get_vector_store
+from app.RAG.utils import validate_file_type
 
 from langchain_core.documents import Document
 
