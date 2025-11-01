@@ -25,6 +25,7 @@ def build_graph(
             return {"messages": [], "error": str(e)}
 
     builder = StateGraph(MessagesState)
+    
     builder.add_node("call_model", call_model)
     builder.set_entry_point("call_model")
     builder.set_finish_point("call_model")

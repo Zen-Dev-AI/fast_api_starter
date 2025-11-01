@@ -12,6 +12,11 @@ config = context.config
 from app.globals.db import Base
 from app.globals.config import settings
 
+# Import all models to ensure they're registered with Base.metadata
+from app.auth.models import User  # noqa: F401
+from app.chat.models import Conversation  # noqa: F401
+from app.todo.models import Todo  # noqa: F401
+
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
 if config.config_file_name is not None:
